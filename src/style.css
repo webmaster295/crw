@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  * { font-family: 'Sarabun', sans-serif; }
+  html { scroll-behavior: smooth; }
+}
+
+/* ── Color Themes — override Tailwind blue CSS variables ────── */
+/* ธีมเขียวมรกต: แทน blue ด้วย emerald */
+[data-theme="green"] {
+  --color-blue-50:  oklch(0.979 0.021 166);
+  --color-blue-100: oklch(0.950 0.052 163);
+  --color-blue-200: oklch(0.905 0.093 164);
+  --color-blue-300: oklch(0.845 0.143 165);
+  --color-blue-400: oklch(0.765 0.177 163);
+  --color-blue-500: oklch(0.696 0.170 162);
+  --color-blue-600: oklch(0.596 0.145 163);
+  --color-blue-700: oklch(0.508 0.118 166);
+  --color-blue-800: oklch(0.432 0.095 167);
+  --color-blue-900: oklch(0.378 0.077 169);
+  --color-blue-950: oklch(0.262 0.051 173);
+  --color-indigo-600: oklch(0.508 0.118 166);
+  --color-indigo-800: oklch(0.432 0.095 167);
+  --color-indigo-900: oklch(0.378 0.077 169);
+}
+
+/* ธีมแดงทับทิม: แทน blue ด้วย rose */
+[data-theme="red"] {
+  --color-blue-50:  oklch(0.969 0.015 12);
+  --color-blue-100: oklch(0.941 0.030 13);
+  --color-blue-200: oklch(0.892 0.058 10);
+  --color-blue-300: oklch(0.810 0.117 12);
+  --color-blue-400: oklch(0.712 0.194 13);
+  --color-blue-500: oklch(0.645 0.246 16);
+  --color-blue-600: oklch(0.586 0.253 18);
+  --color-blue-700: oklch(0.514 0.222 17);
+  --color-blue-800: oklch(0.455 0.188 14);
+  --color-blue-900: oklch(0.410 0.159 10);
+  --color-blue-950: oklch(0.271 0.105 12);
+  --color-indigo-600: oklch(0.514 0.222 17);
+  --color-indigo-800: oklch(0.455 0.188 14);
+  --color-indigo-900: oklch(0.410 0.159 10);
+}
+
+/* ธีมม่วงพาสเทลคลาสสิก: แทน blue ด้วย violet (chroma ต่ำกว่า = นุ่มนวล) */
+[data-theme="pastel"] {
+  --color-blue-50:  oklch(0.972 0.012 295);
+  --color-blue-100: oklch(0.945 0.026 294);
+  --color-blue-200: oklch(0.900 0.050 293);
+  --color-blue-300: oklch(0.835 0.085 292);
+  --color-blue-400: oklch(0.745 0.130 291);
+  --color-blue-500: oklch(0.650 0.165 290);
+  --color-blue-600: oklch(0.560 0.175 290);
+  --color-blue-700: oklch(0.480 0.155 290);
+  --color-blue-800: oklch(0.410 0.125 291);
+  --color-blue-900: oklch(0.360 0.098 292);
+  --color-blue-950: oklch(0.265 0.068 292);
+  --color-indigo-600: oklch(0.480 0.155 290);
+  --color-indigo-800: oklch(0.410 0.125 291);
+  --color-indigo-900: oklch(0.360 0.098 292);
+}
+
+/* ธีมไว้ทุกข์: ขาวดำทั้งหมดรวมรูปภาพ (ตั้งใจ) */
+[data-theme="mono"] body { filter: grayscale(1); }
+
+@layer components {
+  .btn-primary {
+    @apply bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+  .btn-secondary {
+    @apply bg-white text-gray-700 px-6 py-2.5 rounded-lg font-medium border border-gray-300 hover:bg-gray-50 transition-all duration-200;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+  }
+  .input-field {
+    @apply w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+  }
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+}

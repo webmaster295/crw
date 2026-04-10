@@ -1,0 +1,35 @@
+# Claude Code local settings
+.claude/
+
+# Temp files
+C：temp_excel_info.json
+*.temp_excel_info.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment variables — อย่า commit ค่าจริง
+.env
+# .env.example สามารถ commit ได้
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
