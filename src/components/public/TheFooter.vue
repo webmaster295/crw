@@ -131,6 +131,7 @@ const DEFAULT_QUICK_LINKS = [
   { label: 'ภาพกิจกรรม',        to: '/activities',    visible: true },
   { label: 'คลังสื่อ',           to: '/media',         visible: true },
   { label: 'ปฏิทินวิชาการ',     to: '/calendar',      visible: true },
+  { label: 'เอกสาร/ดาวน์โหลด', to: '/documents',     visible: true },
   { label: 'ข้อมูลนักเรียน',    to: '/students-info', visible: true },
   { label: 'เข้าสู่ระบบ',       to: '/login',         visible: true },
   { label: 'ลงทะเบียน',         to: '/register',      visible: false },

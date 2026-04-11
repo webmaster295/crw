@@ -13,6 +13,7 @@ const routes = [
   { path: '/about/:slug', name: 'OrgDetail',  component: () => import('../pages/public/OrgDetailPage.vue') },
   { path: '/wpa-public',  name: 'WpaPublic',  component: () => import('../pages/public/WpaPublicPage.vue') },
   { path: '/calendar',    name: 'Calendar',   component: () => import('../pages/public/CalendarPage.vue') },
+  { path: '/documents',   name: 'Documents',  component: () => import('../pages/public/DocumentsPage.vue') },
 
   // Auth
   { path: '/login',          name: 'Login',         component: () => import('../pages/auth/LoginPage.vue'),        meta: { requiresGuest: true } },
@@ -32,6 +33,7 @@ const routes = [
   { path: '/admin/nav-systems',  name: 'AdminNavSystems', component: () => import('../pages/admin/NavSystemsManagePage.vue'), meta: { requiresAdmin: true } },
   { path: '/admin/wpa',          name: 'AdminWpa',        component: () => import('../pages/admin/WpaAdminPage.vue'),         meta: { requiresAdmin: true } },
   { path: '/admin/calendar',     name: 'AdminCalendar',   component: () => import('../pages/admin/CalendarAdminPage.vue'),    meta: { requiresAdmin: true } },
+  { path: '/admin/documents',    name: 'AdminDocuments',  component: () => import('../pages/admin/DocumentsAdminPage.vue'),   meta: { requiresAdmin: true } },
   { path: '/admin/sis',          name: 'AdminSis',        component: () => import('../pages/admin/SisPage.vue'),              meta: { requiresAdmin: true } },
   { path: '/admin/sis/import',   name: 'AdminSisImport',  component: () => import('../pages/admin/SisImportPage.vue'),        meta: { requiresAdmin: true } },
   { path: '/students-info',      name: 'StudentsInfo',    component: () => import('../pages/public/StudentsDashboardPage.vue') },
@@ -54,7 +56,7 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   // หน้า public ไม่ต้องเช็ค auth
-  const publicRoutes = ['Home', 'News', 'NewsDetail', 'Activities', 'Media', 'MediaDetail', 'Personnel', 'OrgDetail', 'WpaPublic', 'StudentsInfo', 'Calendar']
+  const publicRoutes = ['Home', 'News', 'NewsDetail', 'Activities', 'Media', 'MediaDetail', 'Personnel', 'OrgDetail', 'WpaPublic', 'StudentsInfo', 'Calendar', 'Documents']
   if (publicRoutes.includes(to.name)) return
 
   // รอให้ initAuth() เสร็จก่อน (ป้องกัน auth-lock ชนกัน)

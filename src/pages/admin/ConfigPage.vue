@@ -1190,7 +1190,122 @@
       </div>
 
       <!-- ─── Tab: Footer ─── -->
+      <!-- ═══ NAVBAR TAB ═══ -->
+      <div v-if="activeTab === 'navbar'" class="space-y-4">
+
+        <!-- แถบบนสุด (Top Bar) -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-bold text-gray-900 flex items-center gap-2 text-base">🔝 แถบข้อความบนสุด</h3>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="form.topbar_enabled" class="sr-only peer" />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-blue-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+              <span class="ml-2 text-sm font-medium" :class="form.topbar_enabled ? 'text-blue-600' : 'text-gray-400'">
+                {{ form.topbar_enabled ? 'แสดง' : 'ซ่อน' }}
+              </span>
+            </label>
+          </div>
+          <p class="text-xs text-gray-400 mb-5">แถบสีเข้มบนสุดของทุกหน้า — แสดงข้อความสังกัดหรือข้อความที่ต้องการ</p>
+
+          <div :class="{ 'opacity-40 pointer-events-none': !form.topbar_enabled }">
+            <label class="label">ข้อความที่แสดง</label>
+            <input v-model="form.topbar_text" type="text" class="input-field"
+              :placeholder="form.affiliation || 'สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน'" />
+            <p class="text-xs text-gray-400 mt-1">ถ้าไม่กรอกจะใช้ชื่อสังกัดจากข้อมูลพื้นฐาน</p>
+
+            <!-- Preview -->
+            <div class="mt-4 rounded-xl overflow-hidden border border-gray-200">
+              <div class="bg-blue-900 text-white text-xs py-1.5 px-4 flex justify-between items-center">
+                <span>{{ form.topbar_text || form.affiliation || 'สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน' }}</span>
+                <div class="flex gap-4 opacity-70">
+                  <span>Facebook</span>
+                  <span>เข้าสู่ระบบ</span>
+                </div>
+              </div>
+              <div class="bg-gray-50 text-center text-xs text-gray-400 py-2">ตัวอย่าง</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ═══ FOOTER TAB ═══ -->
       <div v-if="activeTab === 'footer'" class="space-y-4">
+
+        <!-- ป้ายประกาศด่วน -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-bold text-gray-900 flex items-center gap-2 text-base">📢 ป้ายประกาศด่วน</h3>
+            <!-- Master toggle -->
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="form.announcement_enabled" class="sr-only peer" />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-blue-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+              <span class="ml-2 text-sm font-medium" :class="form.announcement_enabled ? 'text-blue-600' : 'text-gray-400'">
+                {{ form.announcement_enabled ? 'เปิดใช้งาน' : 'ปิดอยู่' }}
+              </span>
+            </label>
+          </div>
+          <p class="text-xs text-gray-400 mb-5">แถบข้อความแสดงใต้ navbar ทุกหน้า — ใช้แจ้งข่าวสำคัญหรือกำหนดการเร่งด่วน</p>
+
+          <div class="space-y-4" :class="{ 'opacity-40 pointer-events-none': !form.announcement_enabled }">
+            <!-- ข้อความ -->
+            <div>
+              <label class="label">ข้อความประกาศ</label>
+              <input v-model="form.announcement_text" type="text" class="input-field"
+                placeholder="เช่น ปิดภาคเรียนที่ 1 วันที่ 1–30 ตุลาคม 2568 โรงเรียนจะเปิดทำการ 1 พฤศจิกายน 2568" />
+            </div>
+
+            <!-- ประเภท + ลิงก์ -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="label">ประเภท / สี</label>
+                <div class="flex gap-2 flex-wrap">
+                  <button v-for="t in ANNOUNCEMENT_TYPES" :key="t.key"
+                    @click="form.announcement_type = t.key"
+                    :class="['flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border-2 transition-all',
+                      form.announcement_type === t.key ? t.activeCls : 'border-gray-200 text-gray-500 hover:border-gray-300']">
+                    <span>{{ t.icon }}</span>{{ t.label }}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label class="label">ลิงก์ (ไม่บังคับ)</label>
+                <input v-model="form.announcement_link" type="url" class="input-field text-xs font-mono"
+                  placeholder="https://..." />
+                <p class="text-xs text-gray-400 mt-1">ถ้ามีลิงก์จะแสดงปุ่ม "อ่านเพิ่มเติม"</p>
+              </div>
+            </div>
+
+            <!-- ความเร็ว -->
+            <div>
+              <label class="label">ความเร็วในการวิ่ง</label>
+              <div class="flex gap-2 flex-wrap">
+                <button v-for="sp in SPEED_PRESETS" :key="sp.value"
+                  @click="form.announcement_speed = sp.value"
+                  :class="['px-4 py-2 rounded-xl text-xs font-semibold border-2 transition-all',
+                    form.announcement_speed === sp.value
+                      ? 'border-blue-500 bg-blue-600 text-white'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300']">
+                  {{ sp.label }}
+                </button>
+              </div>
+              <p class="text-xs text-gray-400 mt-2">ปัจจุบัน: {{ form.announcement_speed }} วินาทีต่อรอบ</p>
+            </div>
+
+            <!-- Preview -->
+            <div>
+              <label class="label">ตัวอย่าง</label>
+              <div :class="['rounded-xl py-2 px-4 flex items-center gap-3 text-sm font-medium', previewBg]">
+                <span>{{ previewIcon }}</span>
+                <span :class="previewText" class="flex-1 truncate">
+                  {{ form.announcement_text || 'ข้อความประกาศของคุณจะแสดงที่นี่...' }}
+                </span>
+                <span v-if="form.announcement_link" :class="['text-xs font-bold underline', previewText]">อ่านเพิ่มเติม →</span>
+                <span :class="['opacity-60 text-xs', previewText]">✕</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- ลิงก์ด่วน -->
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -1412,8 +1527,31 @@ const tabs = [
   { key: 'preview',  icon: '👁️', label: 'ตัวอย่าง' },
   { key: 'sections', icon: '🏠', label: 'Section หน้าแรก' },
   { key: 'widgets',  icon: '🧩', label: 'Widget หน้าแรก' },
+  { key: 'navbar',   icon: '🔝', label: 'Navbar' },
   { key: 'footer',   icon: '🔗', label: 'Footer' },
 ]
+
+const SPEED_PRESETS = [
+  { label: '🐢 ช้า',       value: 30 },
+  { label: '🚶 ปานกลาง',  value: 18 },
+  { label: '🏃 เร็ว',      value: 10 },
+  { label: '⚡ เร็วมาก',  value: 6  },
+]
+
+const ANNOUNCEMENT_TYPES = [
+  { key: 'info',    label: 'ข้อมูล',   icon: '📢', activeCls: 'border-blue-500 bg-blue-600 text-white'   },
+  { key: 'warning', label: 'เตือน',    icon: '⚠️', activeCls: 'border-amber-400 bg-amber-400 text-amber-900' },
+  { key: 'success', label: 'สำเร็จ',  icon: '✅', activeCls: 'border-green-500 bg-green-600 text-white'  },
+  { key: 'danger',  label: 'ด่วน',    icon: '🚨', activeCls: 'border-red-500 bg-red-600 text-white'      },
+]
+
+const PREVIEW_BG   = { info: 'bg-blue-600', warning: 'bg-amber-400', success: 'bg-green-600', danger: 'bg-red-600' }
+const PREVIEW_TEXT = { info: 'text-white',  warning: 'text-amber-900', success: 'text-white', danger: 'text-white' }
+const PREVIEW_ICON = { info: '📢', warning: '⚠️', success: '✅', danger: '🚨' }
+
+const previewBg   = computed(() => PREVIEW_BG[form.value.announcement_type]   || 'bg-blue-600')
+const previewText = computed(() => PREVIEW_TEXT[form.value.announcement_type] || 'text-white')
+const previewIcon = computed(() => PREVIEW_ICON[form.value.announcement_type] || '📢')
 
 const DEFAULT_QUICK_LINKS = [
   { label: 'หน้าแรก',            to: '/',          visible: true },
@@ -1422,6 +1560,7 @@ const DEFAULT_QUICK_LINKS = [
   { label: 'คลังสื่อ',           to: '/media',      visible: true },
   { label: 'ปฏิทินวิชาการ',     to: '/calendar',   visible: true },
   { label: 'ข้อมูลนักเรียน',    to: '/students-info', visible: true },
+  { label: 'เอกสาร/ดาวน์โหลด', to: '/documents',  visible: true },
   { label: 'เข้าสู่ระบบ',       to: '/login',      visible: true },
   { label: 'ลงทะเบียน',         to: '/register',   visible: false },
 ]
@@ -1579,6 +1718,17 @@ function loadConfig() {
     student_stats: { ...DEFAULT_WIDGETS.student_stats, ...(w.student_stats || {}) },
     calendar:      { ...DEFAULT_WIDGETS.calendar,      ...(w.calendar      || {}) },
   }
+
+  // Top bar
+  form.value.topbar_enabled = config.value.topbar_enabled ?? true
+  form.value.topbar_text    = config.value.topbar_text    ?? ''
+
+  // Announcement banner
+  form.value.announcement_enabled = config.value.announcement_enabled ?? false
+  form.value.announcement_text    = config.value.announcement_text    ?? ''
+  form.value.announcement_type    = config.value.announcement_type    ?? 'info'
+  form.value.announcement_link    = config.value.announcement_link    ?? ''
+  form.value.announcement_speed   = config.value.announcement_speed   ?? 18
 
   // Footer
   const savedLinks = config.value.footer_quick_links

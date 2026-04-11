@@ -1,8 +1,8 @@
 <template>
   <header class="sticky top-0 z-50">
     <!-- Top bar -->
-    <div class="bg-blue-900 text-white text-xs py-1.5 px-4 flex justify-between items-center">
-      <span>{{ config?.affiliation || 'สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน' }}</span>
+    <div v-if="config?.topbar_enabled !== false" class="bg-blue-900 text-white text-xs py-1.5 px-4 flex justify-between items-center">
+      <span>{{ config?.topbar_text || config?.affiliation || 'สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน' }}</span>
       <div class="flex gap-4">
         <a v-if="config?.social_facebook" :href="config.social_facebook" target="_blank" class="hover:text-yellow-300 transition-colors">Facebook</a>
         <RouterLink to="/login" class="hover:text-yellow-300 transition-colors">เข้าสู่ระบบ</RouterLink>
@@ -37,7 +37,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
-            ระบบสมาชิก
+            เข้าสู่ระบบ
           </RouterLink>
 
           <!-- Mobile Burger -->

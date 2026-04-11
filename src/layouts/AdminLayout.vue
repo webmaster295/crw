@@ -186,6 +186,7 @@ const adminNavItems = [
   { to: '/admin/activities', icon: '🖼️', label: 'จัดการกิจกรรม' },
   { to: '/admin/sis',         icon: '🎓', label: 'ข้อมูลนักเรียน' },
   { to: '/admin/calendar',    icon: '📅', label: 'ปฏิทินวิชาการ' },
+  { to: '/admin/documents',   icon: '📂', label: 'เอกสาร/ดาวน์โหลด' },
   { to: '/admin/wpa',         icon: '📂', label: 'วPA ครู' },
   { to: '/admin/nav-systems', icon: '🔗', label: 'เมนูระบบงาน' },
 ]
@@ -213,6 +214,7 @@ const allPageTitles = {
   '/admin/calendar': 'ปฏิทินวิชาการ',
   '/admin/wpa': 'วPA ครู',
   '/admin/nav-systems': 'เมนูระบบงาน',
+  '/admin/documents':   'เอกสาร/ดาวน์โหลด',
   '/dashboard': 'หน้าหลัก',
   '/profile': 'โปรไฟล์ของฉัน',
   '/wpa': 'วPA ของฉัน',

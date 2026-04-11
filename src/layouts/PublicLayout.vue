@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen flex flex-col bg-white">
     <TheNavbar />
+    <AnnouncementBar />
     <main class="flex-1">
       <slot />
     </main>
@@ -11,9 +12,10 @@
 
 <script setup>
 import { watch } from 'vue'
-import TheNavbar   from '../components/public/TheNavbar.vue'
-import TheFooter   from '../components/public/TheFooter.vue'
-import ScrollToTop from '../components/public/ScrollToTop.vue'
+import TheNavbar        from '../components/public/TheNavbar.vue'
+import TheFooter        from '../components/public/TheFooter.vue'
+import ScrollToTop      from '../components/public/ScrollToTop.vue'
+import AnnouncementBar  from '../components/public/AnnouncementBar.vue'
 import { useSchoolConfig } from '../composables/useSchoolConfig'
 
 const { config } = useSchoolConfig()

@@ -164,7 +164,7 @@
         <div class="space-y-4">
           <!-- Publish -->
           <div class="bg-white rounded-2xl shadow-sm p-5">
-            <div class="flex items-center gap-3 mb-4">
+            <div class="flex items-center gap-3 mb-3">
               <button @click="form.is_published = !form.is_published"
                 :class="['relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
                   form.is_published ? 'bg-green-500' : 'bg-gray-300']">
@@ -172,6 +172,15 @@
                   form.is_published ? 'translate-x-6' : 'translate-x-1']"></span>
               </button>
               <span class="text-sm font-medium text-gray-700">{{ form.is_published ? 'แสดงในเมนู' : 'ซ่อน' }}</span>
+            </div>
+            <div class="flex items-center gap-3 mb-4">
+              <button @click="form.show_title = !form.show_title"
+                :class="['relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                  form.show_title ? 'bg-blue-500' : 'bg-gray-300']">
+                <span :class="['inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm',
+                  form.show_title ? 'translate-x-6' : 'translate-x-1']"></span>
+              </button>
+              <span class="text-sm font-medium text-gray-700">{{ form.show_title ? 'แสดงชื่อหน้า' : 'ซ่อนชื่อหน้า' }}</span>
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-1">ลำดับที่</label>
@@ -232,7 +241,7 @@ const contentTypes = [
   { value: 'text',  label: 'ข้อความ', icon: '💬' },
 ]
 
-const form = ref({ title: '', slug: '', icon: '📄', content_type: 'html', content: '', sort_order: 0, is_published: true })
+const form = ref({ title: '', slug: '', icon: '📄', content_type: 'html', content: '', sort_order: 0, is_published: true, show_title: true })
 
 function typeStyle(t) {
   return {
@@ -269,13 +278,13 @@ async function fetchPages() {
 
 function openAdd() {
   editId.value = null
-  form.value = { title: '', slug: '', icon: '📄', content_type: 'html', content: '', sort_order: pages.value.length, is_published: true }
+  form.value = { title: '', slug: '', icon: '📄', content_type: 'html', content: '', sort_order: pages.value.length, is_published: true, show_title: true }
   showForm.value = true
 }
 
 function openEdit(item) {
   editId.value = item.id
-  form.value = { title: item.title, slug: item.slug, icon: item.icon || '📄', content_type: item.content_type || 'html', content: item.content || '', sort_order: item.sort_order ?? 0, is_published: item.is_published ?? true }
+  form.value = { title: item.title, slug: item.slug, icon: item.icon || '📄', content_type: item.content_type || 'html', content: item.content || '', sort_order: item.sort_order ?? 0, is_published: item.is_published ?? true, show_title: item.show_title ?? true }
   showForm.value = true
 }
 
@@ -287,6 +296,7 @@ async function savePage() {
     icon: form.value.icon, content_type: form.value.content_type,
     content: form.value.content.trim() || null,
     sort_order: form.value.sort_order, is_published: form.value.is_published,
+    show_title: form.value.show_title,
   }
   if (editId.value) {
     await supabase.from('org_pages').update(payload).eq('id', editId.value)

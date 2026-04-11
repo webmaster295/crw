@@ -27,7 +27,7 @@
         </nav>
 
         <!-- Title Hero -->
-        <div class="relative mb-8 rounded-2xl overflow-hidden px-6 py-8 text-center"
+        <div v-if="page.show_title !== false" class="relative mb-8 rounded-2xl overflow-hidden px-6 py-8 text-center"
           style="background: linear-gradient(180deg, #f0f6ff 0%, #ffffff 100%);">
           <div class="flex flex-wrap items-center justify-center gap-3 mb-3">
             <span class="text-4xl">{{ page.icon || '📄' }}</span>

@@ -1,122 +1,238 @@
 <template>
   <AdminLayout>
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-xl font-bold text-gray-900">เมนูระบบงาน</h2>
-        <p class="text-sm text-gray-500 mt-0.5">ลิงก์ที่แสดงใน dropdown "ระบบงาน" บนเมนูเว็บไซต์</p>
-      </div>
-      <button @click="openAdd" class="btn-primary flex items-center gap-2">
-        <span class="text-lg leading-none">+</span> เพิ่มลิงก์
-      </button>
-    </div>
+    <div class="space-y-5">
 
-    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <div v-if="loading" class="p-10 text-center text-gray-400">
-        <div class="text-3xl mb-2 animate-spin">⏳</div>กำลังโหลด...
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">จัดการระบบงาน</h2>
+          <p class="text-xs text-gray-400 mt-0.5">ไอคอนที่แสดงในกริดหน้าแรก และเมนูระบบงานบน Navbar</p>
+        </div>
+        <button @click="openAdd" class="btn-primary flex items-center gap-2 self-start sm:self-auto">
+          + เพิ่มระบบงาน
+        </button>
       </div>
-      <div v-else-if="!items.length" class="p-10 text-center text-gray-400">
-        <div class="text-4xl mb-2">🔗</div>
-        <p>ยังไม่มีลิงก์ระบบงาน</p>
-      </div>
-      <table v-else class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-gray-100 bg-gray-50 text-gray-500 text-left text-xs uppercase tracking-wide">
-            <th class="py-3 px-4 w-10">ไอคอน</th>
-            <th class="py-3 px-4">ชื่อเมนู</th>
-            <th class="py-3 px-4 hidden md:table-cell">URL</th>
-            <th class="py-3 px-4 hidden lg:table-cell w-28 text-center">เปิดแท็บใหม่</th>
-            <th class="py-3 px-4 w-28 text-center">สถานะ</th>
-            <th class="py-3 px-4 w-28 text-center">เรียงลำดับ</th>
-            <th class="py-3 px-4 w-20 text-center">จัดการ</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(item, idx) in items" :key="item.id"
-            class="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
-            <td class="py-2 px-4 text-2xl">{{ item.icon || '🔗' }}</td>
-            <td class="py-2 px-4 font-medium text-gray-900">{{ item.label }}</td>
-            <td class="py-2 px-4 hidden md:table-cell">
-              <span class="text-xs text-gray-500 font-mono truncate block max-w-[200px]">{{ item.url }}</span>
-            </td>
-            <td class="py-2 px-4 hidden lg:table-cell text-center">
-              <span :class="['text-xs font-medium', item.is_external ? 'text-green-600' : 'text-gray-400']">
-                {{ item.is_external ? '✅ ใช่' : '— ไม่' }}
-              </span>
-            </td>
-            <td class="py-2 px-4 text-center">
-              <button @click="toggleActive(item)"
-                :class="['px-3 py-1 rounded-full text-xs font-semibold transition-all',
-                  item.is_active ? 'bg-green-100 text-green-700 hover:bg-red-50 hover:text-red-600' : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600']">
-                {{ item.is_active ? '✅ แสดง' : '📝 ซ่อน' }}
-              </button>
-            </td>
-            <td class="py-2 px-4 text-center">
-              <div class="flex items-center justify-center gap-1">
-                <button @click="moveUp(idx)" :disabled="idx === 0"
-                  class="p-1 rounded text-gray-300 hover:text-blue-500 disabled:opacity-20">▲</button>
-                <button @click="moveDown(idx)" :disabled="idx === items.length - 1"
-                  class="p-1 rounded text-gray-300 hover:text-blue-500 disabled:opacity-20">▼</button>
-              </div>
-            </td>
-            <td class="py-2 px-4 text-center">
-              <div class="flex items-center justify-center gap-1">
-                <button @click="openEdit(item)" class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50">✏️</button>
-                <button @click="deleteItem(item)" class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">🗑️</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
 
-    <!-- Modal Form -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="absolute inset-0 bg-black/40" @click="showModal = false"></div>
-          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 z-10">
-            <h3 class="text-lg font-bold text-gray-900 mb-5">{{ editId ? 'แก้ไขลิงก์' : 'เพิ่มลิงก์ใหม่' }}</h3>
-            <div class="space-y-4">
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-if="loading" class="text-center py-12">
+          <div class="w-8 h-8 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
+        </div>
+        <div v-else-if="!items.length" class="text-center py-12 text-gray-300">
+          <p class="text-4xl mb-2">🔗</p>
+          <p class="text-sm">ยังไม่มีระบบงาน</p>
+        </div>
+        <table v-else class="w-full text-sm">
+          <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+            <tr>
+              <th class="text-left px-5 py-3">ระบบงาน</th>
+              <th class="text-left px-4 py-3 hidden md:table-cell">URL</th>
+              <th class="text-center px-4 py-3 hidden sm:table-cell">หน้าแรก</th>
+              <th class="text-center px-4 py-3">Navbar</th>
+              <th class="text-center px-4 py-3">เรียง</th>
+              <th class="text-right px-5 py-3">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr v-for="(item, idx) in items" :key="item.id" class="hover:bg-gray-50/60 transition-colors">
               <!-- Icon + Label -->
-              <div class="grid grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold text-gray-600 mb-1">ไอคอน</label>
-                  <div class="flex gap-1 flex-wrap">
-                    <button v-for="e in emojiOptions" :key="e" @click="form.icon = e"
-                      :class="['w-8 h-8 rounded-lg text-base flex items-center justify-center border-2 transition-all',
-                        form.icon === e ? 'border-blue-500 bg-blue-50' : 'border-gray-200']">{{ e }}</button>
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 shadow-sm"
+                    :style="{ background: item.icon_bg || '#3b82f6' }">
+                    {{ item.icon || '🔗' }}
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-800">{{ item.label }}</p>
+                    <p v-if="item.description" class="text-xs text-gray-400">{{ item.description }}</p>
                   </div>
                 </div>
-                <div class="col-span-2">
-                  <label class="block text-xs font-semibold text-gray-600 mb-1">ชื่อเมนู <span class="text-red-500">*</span></label>
-                  <input v-model="form.label" type="text" placeholder="เช่น งานทะเบียน..."
-                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </td>
+              <!-- URL -->
+              <td class="px-4 py-3 hidden md:table-cell">
+                <span class="text-xs font-mono text-gray-400 truncate block max-w-[180px]">{{ item.url }}</span>
+              </td>
+              <!-- show_in_grid -->
+              <td class="px-4 py-3 text-center hidden sm:table-cell">
+                <button @click="toggleGrid(item)"
+                  :class="['text-xs px-2.5 py-1 rounded-full font-semibold transition-colors',
+                    item.show_in_grid ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-gray-100 text-gray-400 hover:bg-gray-200']">
+                  {{ item.show_in_grid ? '✅ แสดง' : '— ซ่อน' }}
+                </button>
+              </td>
+              <!-- is_active (navbar) -->
+              <td class="px-4 py-3 text-center">
+                <button @click="toggleActive(item)"
+                  :class="['text-xs px-2.5 py-1 rounded-full font-semibold transition-colors',
+                    item.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-400 hover:bg-gray-200']">
+                  {{ item.is_active ? '✅ แสดง' : '— ซ่อน' }}
+                </button>
+              </td>
+              <!-- Sort -->
+              <td class="px-4 py-3 text-center">
+                <div class="flex items-center justify-center gap-0.5">
+                  <button @click="moveUp(idx)" :disabled="idx === 0"
+                    class="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-gray-600 disabled:opacity-20 text-xs">▲</button>
+                  <button @click="moveDown(idx)" :disabled="idx === items.length - 1"
+                    class="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-gray-600 disabled:opacity-20 text-xs">▼</button>
+                </div>
+              </td>
+              <!-- Actions -->
+              <td class="px-5 py-3 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <button @click="openEdit(item)" class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100 transition-colors">แก้ไข</button>
+                  <button @click="confirmTarget = item" class="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 transition-colors">ลบ</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Add/Edit Modal ── -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="showModal" class="fixed inset-0 bg-black/40 z-50 flex items-start justify-center p-4 overflow-y-auto"
+          @click.self="showModal = false">
+          <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl my-6">
+            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+              <h3 class="font-bold text-gray-900 text-base">{{ editId ? 'แก้ไขระบบงาน' : 'เพิ่มระบบงาน' }}</h3>
+              <button @click="showModal = false" class="text-gray-300 hover:text-gray-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="px-6 py-5 space-y-5">
+
+              <!-- Preview + Icon Config -->
+              <div class="flex items-center gap-5">
+                <!-- Preview icon -->
+                <div class="flex-shrink-0 text-center">
+                  <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg mx-auto"
+                    :style="{ background: form.icon_bg }">
+                    {{ form.icon || '🔗' }}
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1.5">ตัวอย่าง</p>
+                </div>
+
+                <div class="flex-1 space-y-3">
+                  <!-- Emoji picker -->
+                  <div>
+                    <label class="label">ไอคอน (Emoji)</label>
+                    <div class="flex flex-wrap gap-1.5">
+                      <button v-for="e in EMOJI_OPTIONS" :key="e" @click="form.icon = e"
+                        :class="['w-8 h-8 rounded-lg text-base flex items-center justify-center border-2 transition-all',
+                          form.icon === e ? 'border-blue-500 bg-blue-50 scale-110' : 'border-gray-200 hover:border-gray-300']">
+                        {{ e }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Color picker -->
+                  <div>
+                    <label class="label">สีพื้นหลังไอคอน</label>
+                    <div class="flex flex-wrap gap-1.5 items-center">
+                      <button v-for="c in COLOR_PRESETS" :key="c" @click="form.icon_bg = c"
+                        :class="['w-7 h-7 rounded-lg transition-all border-2',
+                          form.icon_bg === c ? 'border-gray-700 scale-110' : 'border-transparent hover:scale-105']"
+                        :style="{ background: c }">
+                      </button>
+                      <!-- Custom color -->
+                      <label class="w-7 h-7 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-gray-400 overflow-hidden" title="เลือกสีเอง">
+                        <input type="color" v-model="form.icon_bg" class="opacity-0 absolute w-0 h-0" />
+                        <span class="text-xs text-gray-400">+</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <!-- URL -->
+
+              <!-- Label + Desc -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="label">ชื่อระบบงาน <span class="text-red-500">*</span></label>
+                  <input v-model="form.label" type="text" class="input-field" placeholder="เช่น งานทะเบียน" />
+                </div>
+                <div>
+                  <label class="label">คำอธิบาย</label>
+                  <input v-model="form.description" type="text" class="input-field" placeholder="เช่น ข้อมูลนักเรียน" />
+                </div>
+              </div>
+
+              <!-- Route Picker -->
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">URL <span class="text-red-500">*</span></label>
-                <input v-model="form.url" type="text" placeholder="https://... หรือ /dashboard"
-                  class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label class="label">เลือกลิงก์</label>
+                <!-- Known internal routes -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden mb-2">
+                  <div class="bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-500 border-b border-gray-200">
+                    📌 หน้าภายในระบบ — คลิกเพื่อเลือก
+                  </div>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-0.5 p-2 max-h-40 overflow-y-auto">
+                    <button v-for="r in KNOWN_ROUTES" :key="r.path"
+                      @click="pickRoute(r)"
+                      :class="['flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors',
+                        form.url === r.path ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-100']">
+                      <span>{{ r.icon }}</span>
+                      <span class="truncate">{{ r.label }}</span>
+                    </button>
+                  </div>
+                </div>
+                <!-- Manual URL input -->
+                <input v-model="form.url" type="text" class="input-field font-mono text-xs"
+                  placeholder="หรือพิมพ์ URL เอง เช่น https://... หรือ /path" />
               </div>
+
+              <!-- Toggles -->
+              <div class="grid grid-cols-2 gap-3">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <div>
+                    <p class="text-xs font-semibold text-gray-700">กริดหน้าแรก</p>
+                    <p class="text-[10px] text-gray-400">แสดงไอคอนในหน้าหลัก</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="form.show_in_grid" class="sr-only peer" />
+                    <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:bg-blue-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <div>
+                    <p class="text-xs font-semibold text-gray-700">เมนู Navbar</p>
+                    <p class="text-[10px] text-gray-400">แสดงใน dropdown บน</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="form.is_active" class="sr-only peer" />
+                    <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:bg-green-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+                  </label>
+                </div>
+              </div>
+
               <!-- External toggle -->
-              <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                <button @click="form.is_external = !form.is_external"
-                  :class="['relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-                    form.is_external ? 'bg-blue-500' : 'bg-gray-300']">
-                  <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm',
-                    form.is_external ? 'translate-x-4' : 'translate-x-0.5']"></span>
-                </button>
-                <span class="text-sm text-gray-700">เปิดในแท็บใหม่ (ลิงก์ภายนอก)</span>
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p class="text-xs font-semibold text-gray-700">เปิดแท็บใหม่</p>
+                  <p class="text-[10px] text-gray-400">สำหรับลิงก์ภายนอก (https://...)</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" v-model="form.is_external" class="sr-only peer" />
+                  <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:bg-orange-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+                </label>
               </div>
+
+              <p v-if="formError" class="text-xs text-red-500">{{ formError }}</p>
             </div>
-            <div class="flex gap-3 mt-6">
-              <button @click="saveItem" :disabled="saving || !form.label.trim() || !form.url.trim()"
-                class="flex-1 btn-primary py-2.5 disabled:opacity-50">
-                {{ saving ? 'กำลังบันทึก...' : '💾 บันทึก' }}
-              </button>
-              <button @click="showModal = false" class="px-5 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">
-                ยกเลิก
+
+            <div class="flex gap-3 px-6 pb-6">
+              <button @click="showModal = false" class="btn-secondary flex-1">ยกเลิก</button>
+              <button @click="saveItem" :disabled="saving"
+                class="btn-primary flex-1 flex items-center justify-center gap-2">
+                <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                {{ saving ? 'กำลังบันทึก...' : editId ? 'บันทึก' : 'เพิ่มระบบงาน' }}
               </button>
             </div>
           </div>
@@ -124,18 +240,18 @@
       </Transition>
     </Teleport>
 
-    <!-- Confirm Delete Modal -->
+    <!-- Confirm Delete -->
     <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="confirmTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="absolute inset-0 bg-black/40" @click="confirmTarget = null"></div>
-          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 z-10 text-center">
-            <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4 text-3xl">🗑️</div>
-            <h3 class="text-lg font-bold text-gray-900 mb-1">ยืนยันการลบ</h3>
-            <p class="text-sm text-gray-500 mb-5">ต้องการลบ "<span class="font-semibold text-gray-700">{{ confirmTarget.label }}</span>" ใช่หรือไม่?<br/>การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+      <Transition name="fade">
+        <div v-if="confirmTarget" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+          @click.self="confirmTarget = null">
+          <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <p class="text-3xl mb-3">🗑️</p>
+            <h3 class="font-bold text-gray-900 mb-1">ยืนยันการลบ</h3>
+            <p class="text-sm text-gray-500 mb-5">ลบ "<span class="font-semibold text-gray-700">{{ confirmTarget.label }}</span>" ใช่ไหม?</p>
             <div class="flex gap-3">
-              <button @click="confirmTarget = null" class="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">ยกเลิก</button>
-              <button @click="confirmDelete" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold">ลบ</button>
+              <button @click="confirmTarget = null" class="flex-1 btn-secondary">ยกเลิก</button>
+              <button @click="confirmDelete" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition-colors">ลบ</button>
             </div>
           </div>
         </div>
@@ -158,53 +274,117 @@ import { ref } from 'vue'
 import AdminLayout from '../../layouts/AdminLayout.vue'
 import { supabase } from '../../lib/supabase'
 
-const items     = ref([])
-const loading   = ref(true)
-const showModal = ref(false)
-const saving    = ref(false)
-const editId    = ref(null)
-const toast     = ref('')
-let toastTimer  = null
+// ── Constants ─────────────────────────────────────────────────
+const EMOJI_OPTIONS = [
+  '🔗','📋','📊','📜','📂','💰','🏫','📅','👥','🎓','⚙️','📱',
+  '🖥️','📝','🔐','📣','🏆','🔬','🎨','📸','🗂️','🧾','📞','🌐',
+]
 
-const emojiOptions = ['🔗', '📋', '📊', '📜', '📂', '💰', '🏫', '📅', '👥', '🎓', '⚙️', '📱']
-const form = ref({ label: '', url: '', icon: '🔗', is_external: true })
+const COLOR_PRESETS = [
+  '#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6',
+  '#f97316','#ec4899','#06b6d4','#84cc16','#6366f1',
+  '#14b8a6','#a855f7','#0ea5e9','#d97706','#dc2626',
+]
 
+const KNOWN_ROUTES = [
+  { path: '/',              label: 'หน้าแรก',              icon: '🏠' },
+  { path: '/news',          label: 'ข่าวประชาสัมพันธ์',    icon: '📰' },
+  { path: '/activities',    label: 'ภาพกิจกรรม',           icon: '🖼️' },
+  { path: '/media',         label: 'คลังสื่อ',              icon: '📚' },
+  { path: '/calendar',      label: 'ปฏิทินวิชาการ',        icon: '📅' },
+  { path: '/documents',     label: 'เอกสาร/ดาวน์โหลด',    icon: '📂' },
+  { path: '/personnel',     label: 'บุคลากร',              icon: '👨‍🏫' },
+  { path: '/students-info', label: 'ข้อมูลนักเรียน',      icon: '🎓' },
+  { path: '/wpa-public',    label: 'วPA ครู',              icon: '📄' },
+  { path: '/login',         label: 'เข้าสู่ระบบ',          icon: '🔐' },
+  { path: '/dashboard',     label: 'หน้าหลักครู',          icon: '👤' },
+  { path: '/wpa',           label: 'วPA ของฉัน',           icon: '📝' },
+]
+
+// ── State ─────────────────────────────────────────────────────
+const items         = ref([])
+const loading       = ref(true)
+const showModal     = ref(false)
+const saving        = ref(false)
+const editId        = ref(null)
+const confirmTarget = ref(null)
+const toast         = ref('')
+const formError     = ref('')
+let toastTimer      = null
+
+const BLANK = { label: '', description: '', url: '', icon: '🔗', icon_bg: '#3b82f6', show_in_grid: true, is_active: true, is_external: false }
+const form = ref({ ...BLANK })
+
+// ── Helpers ───────────────────────────────────────────────────
 function showToast(msg) {
-  toast.value = msg; clearTimeout(toastTimer)
+  toast.value = msg
+  clearTimeout(toastTimer)
   toastTimer = setTimeout(() => { toast.value = '' }, 2500)
 }
 
+function pickRoute(r) {
+  form.value.url = r.path
+  form.value.is_external = false
+  if (!form.value.label) form.value.label = r.label
+  if (!form.value.icon || form.value.icon === '🔗') form.value.icon = r.icon
+}
+
+// ── CRUD ──────────────────────────────────────────────────────
 async function fetchItems() {
   loading.value = true
-  const { data, error } = await supabase.from('nav_systems').select('*').order('sort_order', { ascending: true })
-  if (error) { console.error('nav_systems load error:', error); showToast('❌ ' + error.message) }
+  const { data } = await supabase.from('nav_systems').select('*').order('sort_order')
   items.value = data || []
   loading.value = false
 }
 
 function openAdd() {
   editId.value = null
-  form.value = { label: '', url: '', icon: '🔗', is_external: true }
+  form.value = { ...BLANK }
+  formError.value = ''
   showModal.value = true
 }
 
 function openEdit(item) {
   editId.value = item.id
-  form.value = { label: item.label, url: item.url, icon: item.icon || '🔗', is_external: item.is_external ?? true }
+  form.value = {
+    label:        item.label,
+    description: item.description || '',
+    url:          item.url,
+    icon:         item.icon || '🔗',
+    icon_bg:      item.icon_bg || '#3b82f6',
+    show_in_grid: item.show_in_grid ?? true,
+    is_active:    item.is_active ?? true,
+    is_external:  item.is_external ?? false,
+  }
+  formError.value = ''
   showModal.value = true
 }
 
 async function saveItem() {
-  if (!form.value.label.trim() || !form.value.url.trim()) return
+  formError.value = ''
+  if (!form.value.label.trim()) { formError.value = 'กรุณาใส่ชื่อระบบงาน'; return }
+  if (!form.value.url.trim())   { formError.value = 'กรุณาเลือกหรือใส่ลิงก์'; return }
+
   saving.value = true
-  const payload = { label: form.value.label.trim(), url: form.value.url.trim(), icon: form.value.icon, is_external: form.value.is_external }
+  const payload = {
+    label:        form.value.label.trim(),
+    description: form.value.description?.trim() || null,
+    url:          form.value.url.trim(),
+    icon:         form.value.icon,
+    icon_bg:      form.value.icon_bg,
+    show_in_grid: form.value.show_in_grid,
+    is_active:    form.value.is_active,
+    is_external:  form.value.is_external,
+  }
+
   if (editId.value) {
     await supabase.from('nav_systems').update(payload).eq('id', editId.value)
     showToast('✅ บันทึกแล้ว')
   } else {
-    await supabase.from('nav_systems').insert({ ...payload, sort_order: items.value.length, is_active: true })
-    showToast('✅ เพิ่มลิงก์แล้ว')
+    await supabase.from('nav_systems').insert({ ...payload, sort_order: items.value.length })
+    showToast('✅ เพิ่มระบบงานแล้ว')
   }
+
   saving.value = false
   showModal.value = false
   fetchItems()
@@ -215,13 +395,14 @@ async function toggleActive(item) {
   item.is_active = !item.is_active
 }
 
-const confirmTarget = ref(null)
-function deleteItem(item) { confirmTarget.value = item }
+async function toggleGrid(item) {
+  await supabase.from('nav_systems').update({ show_in_grid: !item.show_in_grid }).eq('id', item.id)
+  item.show_in_grid = !item.show_in_grid
+}
+
 async function confirmDelete() {
-  const item = confirmTarget.value
-  if (!item) return
-  await supabase.from('nav_systems').delete().eq('id', item.id)
-  items.value = items.value.filter(i => i.id !== item.id)
+  await supabase.from('nav_systems').delete().eq('id', confirmTarget.value.id)
+  items.value = items.value.filter(i => i.id !== confirmTarget.value.id)
   confirmTarget.value = null
   showToast('🗑️ ลบแล้ว')
 }
@@ -248,9 +429,10 @@ async function moveDown(idx) {
 
 fetchItems()
 </script>
+
 <style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
-.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, -16px); }
-.modal-enter-active, .modal-leave-active { transition: all 0.2s ease; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, -12px); }
 </style>
