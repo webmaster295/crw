@@ -235,7 +235,7 @@ const quickActions = [
   { icon: '🖼️', label: 'กิจกรรม',    to: '/admin/activities'   },
   { icon: '📚', label: 'คลังสื่อ',    to: '/admin/media'        },
   { icon: '📅', label: 'ปฏิทิน',     to: '/admin/calendar'     },
-  { icon: '🎓', label: 'นักเรียน',    to: '/admin/sis'          },
+  { icon: '🎓', label: 'นักเรียน',    to: '/admin/students'     },
   { icon: '👨‍🏫', label: 'ครู',       to: '/admin/teachers'     },
   { icon: '👥', label: 'ผู้ใช้',      to: '/admin/users'        },
   { icon: '📂', label: 'วPA',         to: '/admin/wpa'          },
@@ -252,7 +252,7 @@ onMounted(async () => {
   const [usersRes, teachersRes, studentsRes, newsCountRes, activitiesRes, calendarMonthRes, upcomingRes, recentNewsRes, pendingRes] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
-    supabase.from('students').select('id', { count: 'exact', head: true }),
+    supabase.from('students').select('student_code', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('news').select('id', { count: 'exact', head: true }),
     supabase.from('activities').select('id', { count: 'exact', head: true }),
     supabase.from('academic_calendar')
