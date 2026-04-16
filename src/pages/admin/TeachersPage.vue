@@ -8,9 +8,16 @@
           <h2 class="text-lg font-bold text-gray-900">จัดการครูและบุคลากร</h2>
           <p class="text-xs text-gray-400 mt-0.5">ทั้งหมด {{ teachers.length }} คน</p>
         </div>
-        <button @click="openAdd" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
-          <span class="text-base">+</span> เพิ่มครู
-        </button>
+        <div class="flex gap-2">
+          <router-link to="/admin/users"
+            class="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
+            👥 อนุมัติบัญชี
+            <span v-if="pendingCount" class="bg-white text-amber-600 rounded-full px-1.5 py-0.5 text-xs font-bold leading-none">{{ pendingCount }}</span>
+          </router-link>
+          <button @click="openAdd" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
+            <span class="text-base">+</span> เพิ่มครู
+          </button>
+        </div>
       </div>
 
       <!-- Search & Filter -->
@@ -42,6 +49,11 @@
             <!-- Badge วิทยฐานะ -->
             <div v-if="t.academic_standing" class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs px-2 py-0.5 rounded-full font-medium">
               {{ t.academic_standing.replace('ครู','') }}
+            </div>
+            <!-- Badge สถานะบัญชี -->
+            <div class="absolute top-2 left-2">
+              <span v-if="linkedIds.has(t.id)" class="bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">✓ มีบัญชี</span>
+              <span v-else class="bg-gray-400 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">ไม่มีบัญชี</span>
             </div>
           </div>
           <!-- Info -->
@@ -141,10 +153,12 @@
                     <option>ครูเชี่ยวชาญพิเศษ</option>
                   </optgroup>
                   <optgroup label="── ผู้อำนวยการ ──">
+                    <option>ผู้อำนวยการชำนาญการ</option>
                     <option>ผู้อำนวยการชำนาญการพิเศษ</option>
                     <option>ผู้อำนวยการเชี่ยวชาญ</option>
                   </optgroup>
                   <optgroup label="── รองผู้อำนวยการ ──">
+                    <option>รองผู้อำนวยการชำนาญการ</option>
                     <option>รองผู้อำนวยการชำนาญการพิเศษ</option>
                     <option>รองผู้อำนวยการเชี่ยวชาญ</option>
                   </optgroup>
@@ -263,16 +277,42 @@
               </div>
             </div>
 
-            <!-- เชื่อมบัญชี -->
-            <div class="bg-blue-50 rounded-xl p-4">
-              <label class="label text-blue-800">🔗 เชื่อมกับบัญชีผู้ใช้ในระบบ (ถ้ามี)</label>
-              <select v-model="teacherForm.profile_id" class="input-field mt-1">
-                <option value="">-- ไม่เชื่อม --</option>
-                <option v-for="p in availableProfiles" :key="p.id" :value="p.id">
-                  {{ p.full_name || p.email }}
-                </option>
-              </select>
-              <p class="text-xs text-blue-600 mt-1">ถ้าเชื่อม จะอนุมัติ account และตั้งเป็น teacher อัตโนมัติ</p>
+            <!-- บัญชีผู้ใช้ -->
+            <div class="bg-blue-50 rounded-xl p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-semibold text-blue-800">🔑 บัญชีเข้าสู่ระบบ</p>
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" v-model="teacherForm.createAccount" class="w-4 h-4 accent-blue-600 rounded" />
+                  <span class="text-sm text-blue-700 font-medium">สร้างบัญชีให้ครู</span>
+                </label>
+              </div>
+
+              <!-- แสดงเมื่อเปิดสร้างบัญชี หรือตอน edit ที่มีบัญชีแล้ว -->
+              <template v-if="teacherForm.createAccount">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="label">อีเมล <span class="text-red-500">*</span></label>
+                    <input v-model="teacherForm.accountEmail" type="email" class="input-field"
+                      placeholder="teacher@school.go.th" />
+                  </div>
+                  <div>
+                    <label class="label">รหัสผ่าน <span class="text-red-500">*</span></label>
+                    <input v-model="teacherForm.accountPassword" type="password" class="input-field"
+                      placeholder="อย่างน้อย 6 ตัวอักษร" />
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                  <input type="checkbox" v-model="teacherForm.accountApproved" id="chk-approved"
+                    class="w-4 h-4 accent-green-600 rounded" />
+                  <label for="chk-approved" class="text-sm text-gray-700 cursor-pointer">
+                    อนุมัติทันที — ครูสามารถ Login ได้เลย
+                  </label>
+                </div>
+                <p class="text-xs text-blue-500">ระบบจะสร้างบัญชีและเชื่อมกับข้อมูลครูนี้โดยอัตโนมัติ</p>
+              </template>
+              <template v-else>
+                <p class="text-xs text-gray-400">ไม่สร้างบัญชี — ครูจะไม่สามารถ Login ได้ (เหมาะสำหรับข้อมูลสำหรับแสดงผลเท่านั้น)</p>
+              </template>
             </div>
 
             <div v-if="formError" class="bg-red-50 text-red-700 rounded-xl p-3 text-sm">{{ formError }}</div>
@@ -321,7 +361,7 @@
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '../../layouts/AdminLayout.vue'
 import ImageUploadCrop from '../../components/admin/ImageUploadCrop.vue'
-import { supabase } from '../../lib/supabase'
+import { supabase, SUPABASE_URL, SUPABASE_SERVICE_KEY } from '../../lib/supabase'
 import { useSchoolConfig } from '../../composables/useSchoolConfig'
 
 // ── Constants ────────────────────────────────────────────────
@@ -340,6 +380,8 @@ const adminDepartments = computed(() =>
 const teachers          = ref([])
 const availableProfiles = ref([])
 const loading           = ref(false)
+const pendingCount      = ref(0)
+const linkedIds         = ref(new Set())   // teacher_profiles.id ที่มีบัญชีใน profiles
 const showForm          = ref(false)
 const formLoading       = ref(false)
 const formError         = ref('')
@@ -356,7 +398,12 @@ const emptyForm = () => ({
   academic_standing: '', subject_group: '', group_role: '', subjects_taught: '',
   id_card: '', phone: '', email: '', birth_date: '',
   education_level: '', education_major: '', education_institution: '',
-  website_url: '', profile_id: '', profile_image_url: ''
+  website_url: '', profile_id: '', profile_image_url: '',
+  // บัญชีผู้ใช้
+  createAccount:   false,
+  accountEmail:    '',
+  accountPassword: '',
+  accountApproved: true,
 })
 const teacherForm = ref(emptyForm())
 
@@ -434,35 +481,79 @@ async function handleSave() {
   formLoading.value = true
   formError.value   = ''
   try {
-    const { profile_id, ...payload } = teacherForm.value
+    const { profile_id, createAccount, accountEmail, accountPassword, accountApproved, ...payload } = teacherForm.value
     if (!payload.first_name || !payload.last_name) throw new Error('กรุณากรอกชื่อ-นามสกุล')
 
-    let teacherId = editId.value
-    if (editId.value) {
-      if (profile_id) payload.profile_id = profile_id
-      const { error } = await supabase.from('teacher_profiles').update(payload).eq('id', editId.value)
-      if (error) throw error
-      if (profile_id) {
-        await supabase.from('profiles').update({ role: 'teacher', is_approved: true }).eq('id', profile_id)
-      }
-    } else {
-      payload.id = pendingNewId.value
-      teacherId  = pendingNewId.value
-      if (profile_id) payload.profile_id = profile_id
-      const { error } = await supabase.from('teacher_profiles').insert(payload)
-      if (error) throw error
-      if (profile_id) {
-        await supabase.from('profiles').update({ role: 'teacher', is_approved: true }).eq('id', profile_id)
-      }
-    }
+    // ── ถ้าต้องการสร้างบัญชี ──────────────────────────────────
+    if (createAccount) {
+      if (!accountEmail) throw new Error('กรุณากรอกอีเมลสำหรับบัญชี')
+      if (accountPassword.length < 6) throw new Error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
 
-    // บันทึก dept assignments — ลบเก่าแล้ว insert ใหม่
-    await supabase.from('teacher_department_assignments').delete().eq('teacher_id', teacherId)
-    const validDepts = deptAssignments.value.filter(d => d.department_name?.trim())
-    if (validDepts.length) {
-      await supabase.from('teacher_department_assignments').insert(
-        validDepts.map(d => ({ teacher_id: teacherId, department_name: d.department_name, department_role: d.department_role || 'กรรมการ' }))
-      )
+      // สร้าง auth user ผ่าน admin API
+      if (!SUPABASE_SERVICE_KEY) throw new Error('ไม่พบ Service Role Key')
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_SERVICE_KEY,
+          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email:         accountEmail.trim(),
+          password:      accountPassword,
+          email_confirm: true,
+          user_metadata: { full_name: `${payload.prefix || ''}${payload.first_name} ${payload.last_name}`.trim() },
+        }),
+      })
+      const authData = await res.json()
+      if (!res.ok) throw new Error(authData.message || 'สร้างบัญชีไม่สำเร็จ')
+
+      const newUserId = authData.id
+
+      // upsert profiles
+      await supabase.from('profiles').upsert({
+        id:          newUserId,
+        email:       accountEmail.trim(),
+        full_name:   `${payload.prefix || ''}${payload.first_name} ${payload.last_name}`.trim(),
+        role:        'teacher',
+        is_approved: accountApproved,
+      }, { onConflict: 'id' })
+
+      // สร้าง teacher_profiles ด้วย id = newUserId
+      payload.id = newUserId
+      payload.email = accountEmail.trim()
+      const { error: tpErr } = await supabase.from('teacher_profiles').upsert(payload, { onConflict: 'id' })
+      if (tpErr) throw tpErr
+
+      // บันทึก dept
+      await supabase.from('teacher_department_assignments').delete().eq('teacher_id', newUserId)
+      const validDepts = deptAssignments.value.filter(d => d.department_name?.trim())
+      if (validDepts.length) {
+        await supabase.from('teacher_department_assignments').insert(
+          validDepts.map(d => ({ teacher_id: newUserId, department_name: d.department_name, department_role: d.department_role || 'กรรมการ' }))
+        )
+      }
+
+    } else {
+      // ── ไม่สร้างบัญชี — บันทึกข้อมูลครูอย่างเดียว ─────────
+      let teacherId = editId.value
+      if (editId.value) {
+        const { error } = await supabase.from('teacher_profiles').update(payload).eq('id', editId.value)
+        if (error) throw error
+      } else {
+        payload.id = pendingNewId.value
+        teacherId  = pendingNewId.value
+        const { error } = await supabase.from('teacher_profiles').insert(payload)
+        if (error) throw error
+      }
+
+      await supabase.from('teacher_department_assignments').delete().eq('teacher_id', teacherId)
+      const validDepts = deptAssignments.value.filter(d => d.department_name?.trim())
+      if (validDepts.length) {
+        await supabase.from('teacher_department_assignments').insert(
+          validDepts.map(d => ({ teacher_id: teacherId, department_name: d.department_name, department_role: d.department_role || 'กรรมการ' }))
+        )
+      }
     }
 
     closeForm()
@@ -495,10 +586,19 @@ async function deleteTeacher() {
 // ── Mount ─────────────────────────────────────────────────────
 onMounted(async () => {
   await loadTeachers()
-  const { data } = await supabase.from('profiles')
-    .select('id, email, full_name')
-    .in('role', ['teacher','pending'])
-    .eq('is_approved', false)
-  availableProfiles.value = data || []
+
+  // โหลด profiles สำหรับ dropdown เชื่อม + นับ pending + หา linked ids
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, is_approved, role')
+    .in('role', ['teacher', 'pending'])
+
+  const allProfiles = profiles || []
+  availableProfiles.value = allProfiles.filter(p => !p.is_approved)
+  pendingCount.value = allProfiles.filter(p => !p.is_approved).length
+
+  // ids ที่มีบัญชีแล้ว (teacher_profiles.id ตรงกับ profiles.id)
+  const profileIds = new Set(allProfiles.map(p => p.id))
+  linkedIds.value = new Set(teachers.value.filter(t => profileIds.has(t.id)).map(t => t.id))
 })
 </script>

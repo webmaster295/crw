@@ -37,6 +37,7 @@ const routes = [
   { path: '/admin/documents',    name: 'AdminDocuments',  component: () => import('../pages/admin/DocumentsAdminPage.vue'),   meta: { requiresAdmin: true } },
   { path: '/admin/sis',          name: 'AdminSis',        component: () => import('../pages/admin/SisPage.vue'),              meta: { requiresAdmin: true } },
   { path: '/admin/sis/import',   name: 'AdminSisImport',  component: () => import('../pages/admin/SisImportPage.vue'),        meta: { requiresAdmin: true } },
+  { path: '/admin/api-keys',     name: 'AdminApiKeys',    component: () => import('../pages/admin/ApiKeysPage.vue'),          meta: { requiresAdmin: true } },
   { path: '/students-info',      name: 'StudentsInfo',    component: () => import('../pages/public/StudentsDashboardPage.vue') },
   { path: '/calendar',           name: 'Calendar',        component: () => import('../pages/public/CalendarPage.vue') },
 

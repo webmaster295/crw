@@ -295,6 +295,12 @@ async function createUser() {
       is_approved: addForm.value.is_approved,
     }, { onConflict: 'id' })
 
+    // auto-create teacher_profiles ถ้าเป็น teacher และอนุมัติทันที
+    if (addForm.value.role === 'teacher' && addForm.value.is_approved) {
+      await supabase.from('teacher_profiles')
+        .upsert({ id: data.id }, { onConflict: 'id', ignoreDuplicates: true })
+    }
+
     showAddModal.value = false
     showToast('✅ สร้างบัญชีสำเร็จ')
     await fetchUsers()
@@ -333,8 +339,21 @@ async function changePassword() {
 }
 
 async function toggleApprove(u, val) {
-  await supabase.from('profiles').update({ is_approved: val }).eq('id', u.id)
+  const updates = { is_approved: val }
+  // เมื่ออนุมัติครั้งแรก: promote pending → teacher อัตโนมัติ
+  if (val && u.role === 'pending') updates.role = 'teacher'
+
+  await supabase.from('profiles').update(updates).eq('id', u.id)
+
+  // auto-create teacher_profiles ถ้าเป็น teacher
+  if (val && (u.role === 'teacher' || u.role === 'pending')) {
+    await supabase.from('teacher_profiles')
+      .upsert({ id: u.id }, { onConflict: 'id', ignoreDuplicates: true })
+  }
+
   u.is_approved = val
+  if (val && u.role === 'pending') u.role = 'teacher'
+  showToast(val ? '✅ อนุมัติแล้ว ครูสามารถ Login และกรอกข้อมูลได้เลย' : '⛔ ยกเลิกการอนุมัติแล้ว')
 }
 
 async function changeRole(id, role) {

@@ -189,11 +189,13 @@ const adminNavItems = [
   { to: '/admin/documents',   icon: '📂', label: 'เอกสาร/ดาวน์โหลด' },
   { to: '/admin/wpa',         icon: '📂', label: 'วPA ครู' },
   { to: '/admin/nav-systems', icon: '🔗', label: 'เมนูระบบงาน' },
+  { to: '/admin/api-keys',   icon: '🔑', label: 'API Keys' },
 ]
 
 const teacherNavItems = [
   { to: '/dashboard', icon: '🏠', label: 'หน้าหลัก' },
   { to: '/profile',   icon: '👤', label: 'โปรไฟล์ของฉัน' },
+  { to: '/students',  icon: '🎓', label: 'รายชื่อนักเรียน' },
   { to: '/wpa',       icon: '📂', label: 'วPA ของฉัน' },
 ]
 
@@ -218,7 +220,7 @@ const allPageTitles = {
   '/dashboard': 'หน้าหลัก',
   '/profile': 'โปรไฟล์ของฉัน',
   '/wpa': 'วPA ของฉัน',
-  '/students': 'นักเรียน',
+  '/students': 'รายชื่อนักเรียน',
 }
 const pageTitle = computed(() => allPageTitles[route.path] || '')
 

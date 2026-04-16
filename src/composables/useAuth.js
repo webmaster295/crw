@@ -48,19 +48,38 @@ async function fetchProfile(accessToken) {
 
   try {
     if (!token) throw new Error('no token')
+    const headers = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    }
+
+    // โหลด profiles
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.value.id}&select=*`,
-      {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      }
+      { headers }
     )
     if (!res.ok) throw new Error(`${res.status}`)
     const data = await res.json()
-    profile.value = Array.isArray(data) && data.length > 0 ? data[0] : null
+    const profileData = Array.isArray(data) && data.length > 0 ? data[0] : null
+
+    // โหลด profile_image_url จาก teacher_profiles (ถ้ามี)
+    if (profileData) {
+      try {
+        const tpRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/teacher_profiles?id=eq.${user.value.id}&select=profile_image_url`,
+          { headers }
+        )
+        if (tpRes.ok) {
+          const tpData = await tpRes.json()
+          if (Array.isArray(tpData) && tpData.length > 0 && tpData[0].profile_image_url) {
+            profileData.profile_image_url = tpData[0].profile_image_url
+          }
+        }
+      } catch (_) {}
+    }
+
+    profile.value = profileData
   } catch (e) {
     console.error('[fetchProfile]', e.message)
     profile.value = null
