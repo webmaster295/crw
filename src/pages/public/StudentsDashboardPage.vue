@@ -521,8 +521,18 @@ const bmiByGrade = computed(() => {
 async function loadPublicBMI() {
   bmiLoading.value = true
   try {
-    // ดึง active students
-    const activeMap = {}
+    // หา import ล่าสุด
+    const { data: imp } = await supabase
+      .from('dmc_imports')
+      .select('id')
+      .order('imported_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (!imp) { bmiRawData.value = []; return }
+
+    // ดึง active students (เพื่อ cross-reference)
+    const activeSet = new Set()
+    const gradeMap  = {}
     let from = 0
     while (true) {
       const { data } = await supabase
@@ -531,38 +541,37 @@ async function loadPublicBMI() {
         .eq('is_active', true)
         .range(from, from + 999)
       if (!data?.length) break
-      data.forEach(s => { activeMap[s.student_code] = s })
+      data.forEach(s => { activeSet.add(s.student_code); gradeMap[s.student_code] = s.grade_level })
       if (data.length < 1000) break
       from += 1000
     }
-    const codes = Object.keys(activeMap)
-    if (!codes.length) { bmiRawData.value = []; return }
 
-    // ดึง snapshots ที่มี weight+height แล้วเก็บล่าสุดต่อคน
-    const snapMap = {}
-    for (let i = 0; i < codes.length; i += 500) {
-      const batch = codes.slice(i, i + 500)
-      const { data } = await supabase
+    // ดึง snapshots ของ import ล่าสุดด้วย .range() (ไม่ใช้ .in())
+    let snaps = []
+    from = 0
+    while (true) {
+      const { data, error } = await supabase
         .from('student_snapshots')
-        .select('student_code, weight, height, academic_year, semester')
-        .in('student_code', batch)
-      ;(data || []).forEach(snap => {
-        const w = parseFloat(snap.weight), h = parseFloat(snap.height)
-        if (!w || !h || h < 50) return
-        const cur = snapMap[snap.student_code]
-        if (!cur || snap.academic_year > cur.academic_year ||
-            (snap.academic_year === cur.academic_year && snap.semester > cur.semester)) {
-          snapMap[snap.student_code] = snap
-        }
-      })
+        .select('student_code, weight, height, grade_level')
+        .eq('import_id', imp.id)
+        .range(from, from + 999)
+      if (error) break
+      if (!data?.length) break
+      snaps = snaps.concat(data)
+      if (data.length < 1000) break
+      from += 1000
     }
 
-    bmiRawData.value = codes
-      .filter(code => snapMap[code])
-      .map(code => ({
-        grade_level: activeMap[code].grade_level,
-        weight: snapMap[code].weight,
-        height: snapMap[code].height,
+    // กรองเฉพาะ active + มีข้อมูลที่ถูกต้อง
+    bmiRawData.value = snaps
+      .filter(s => {
+        const w = parseFloat(s.weight), h = parseFloat(s.height)
+        return activeSet.has(s.student_code) && w > 0 && h > 50
+      })
+      .map(s => ({
+        grade_level: gradeMap[s.student_code] || s.grade_level,
+        weight: s.weight,
+        height: s.height,
       }))
   } catch (e) { console.error(e) }
   finally { bmiLoading.value = false }

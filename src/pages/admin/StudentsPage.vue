@@ -1321,53 +1321,57 @@ const bmiData    = ref([])   // นักเรียนปัจจุบัน
 async function loadBMIData() {
   loadingBMI.value = true
   try {
-    // ── Step 1: ดึง active students (grade, room, gender, prefix) ─────────────
-    const activeMap = {}
-    let from = 0
+    // ── Step 1: หา import ล่าสุด ───────────────────────────────────────────────
+    const { data: imp } = await supabase
+      .from('dmc_imports')
+      .select('id')
+      .order('imported_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (!imp) { bmiData.value = []; return }
+
+    // ── Step 2: ดึง snapshots ของ import นั้น (ที่มี weight+height) ────────────
+    // ใช้ .range() ปกติ — ไม่ใช้ .in() ที่ทำให้ URL ยาวเกิน
+    let snaps = [], from = 0
     while (true) {
       const { data, error } = await supabase
-        .from('students')
-        .select('student_code, grade_level, room, gender, prefix')
-        .eq('is_active', true)
+        .from('student_snapshots')
+        .select('student_code, weight, height, grade_level, room, gender, prefix')
+        .eq('import_id', imp.id)
         .range(from, from + 999)
       if (error) throw error
       if (!data?.length) break
-      data.forEach(s => { activeMap[s.student_code] = s })
+      snaps = snaps.concat(data)
       if (data.length < 1000) break
       from += 1000
     }
-    const codes = Object.keys(activeMap)
-    if (!codes.length) { bmiData.value = []; return }
 
-    // ── Step 2: ดึง snapshots ที่มี weight+height ของนักเรียนเหล่านั้น ──────────
-    // batch ทีละ 500 เพราะ .in() มี limit
-    const snapMap = {}   // student_code → snapshot ล่าสุดที่มี weight/height
-    for (let i = 0; i < codes.length; i += 500) {
-      const batch = codes.slice(i, i + 500)
-      const { data } = await supabase
-        .from('student_snapshots')
-        .select('student_code, weight, height, academic_year, semester')
-        .in('student_code', batch)
-      ;(data || []).forEach(snap => {
+    // ── Step 3: cross-reference กับ allStudents (active เท่านั้น) ─────────────
+    // ถ้ายังไม่โหลด students ให้โหลดก่อน
+    if (!allStudents.value.length) await loadCurrentStudents()
+    const activeMap = {}
+    allStudents.value
+      .filter(s => s.is_active)
+      .forEach(s => { activeMap[s.student_code] = s })
+
+    bmiData.value = snaps
+      .filter(snap => {
+        // กรองเฉพาะ active student + ต้องมี weight/height ที่สมเหตุสมผล
         const w = parseFloat(snap.weight), h = parseFloat(snap.height)
-        if (!w || !h || h < 50) return   // ข้ามข้อมูลที่ไม่สมเหตุสมผล
-        const cur = snapMap[snap.student_code]
-        if (!cur ||
-            snap.academic_year > cur.academic_year ||
-            (snap.academic_year === cur.academic_year && snap.semester > cur.semester)) {
-          snapMap[snap.student_code] = snap   // เก็บล่าสุด
+        return activeMap[snap.student_code] && w > 0 && h > 50
+      })
+      .map(snap => {
+        const s = activeMap[snap.student_code]
+        return {
+          student_code: snap.student_code,
+          grade_level:  s.grade_level || snap.grade_level,  // ใช้ชั้นปัจจุบัน
+          room:         s.room        || snap.room,
+          gender:       s.gender      || snap.gender,
+          prefix:       s.prefix      || snap.prefix,
+          weight:       snap.weight,
+          height:       snap.height,
         }
       })
-    }
-
-    // ── Step 3: รวม active student + snapshot ล่าสุด ──────────────────────────
-    bmiData.value = codes
-      .filter(code => snapMap[code])
-      .map(code => ({
-        ...activeMap[code],
-        weight: snapMap[code].weight,
-        height: snapMap[code].height,
-      }))
   } catch (e) { console.error(e) }
   finally { loadingBMI.value = false }
 }
