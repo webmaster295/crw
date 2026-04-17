@@ -1144,8 +1144,27 @@ function handleFileUpload(e) {
       const wb  = XLSX.read(ev.target.result, { type:'array' })
       const ws  = wb.Sheets[wb.SheetNames[0]]
       const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' })
-      let hRow  = 0
-      while (hRow < raw.length && (!raw[hRow] || raw[hRow].every(c=>!c))) hRow++
+
+      // ── Smart header detection ─────────────────────────────────────────────
+      // ไฟล์ DMC มักมี metadata (วันที่สร้างรายงาน) ที่ row 1
+      // ให้ scan 20 แถวแรก หา row ที่มี recognized column names มากที่สุด
+      const knownCols = new Set(Object.keys(COL_DETECT))
+      function rowScore(row) {
+        if (!row) return 0
+        return row.filter(c => knownCols.has(String(c).trim())).length
+      }
+      // ข้ามแถวว่างก่อน
+      let hRow = 0
+      while (hRow < raw.length && (!raw[hRow] || raw[hRow].every(c => !c))) hRow++
+      // หา row ที่ได้ score สูงสุดใน 20 แถวถัดไป
+      let bestRow = hRow, bestScore = rowScore(raw[hRow])
+      for (let r = hRow + 1; r < Math.min(hRow + 20, raw.length); r++) {
+        const score = rowScore(raw[r])
+        if (score > bestScore) { bestScore = score; bestRow = r }
+      }
+      hRow = bestRow
+      // ──────────────────────────────────────────────────────────────────────
+
       const headers = (raw[hRow]||[]).map(h=>String(h).trim()).filter(h=>h)
       const rows    = raw.slice(hRow+1).filter(r=>r.some(c=>c!==''))
       excelHeaders.value = headers
