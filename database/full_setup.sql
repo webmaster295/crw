@@ -345,6 +345,7 @@ CREATE TABLE IF NOT EXISTS public.student_snapshots (
   mother_first_name     VARCHAR(100) DEFAULT '',
   mother_last_name      VARCHAR(100) DEFAULT '',
   disadvantaged_status  VARCHAR(200) DEFAULT '',
+  academic_year         VARCHAR(10)  DEFAULT '',
   created_at            TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
