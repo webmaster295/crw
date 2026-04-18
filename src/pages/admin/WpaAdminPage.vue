@@ -60,7 +60,7 @@
                 </div>
                 <div>
                   <p class="font-medium text-gray-900 text-sm">{{ r.full_name || '—' }}</p>
-                  <p class="text-xs text-gray-400">{{ r.position || '' }}</p>
+                  <p class="text-xs text-gray-400">{{ r.teacher_position || '' }}</p>
                 </div>
               </div>
             </td>

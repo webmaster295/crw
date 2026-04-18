@@ -843,7 +843,7 @@ RETURNS TABLE (
   note              TEXT,
   is_public         BOOLEAN,
   full_name         TEXT,
-  position          TEXT,
+  teacher_position  TEXT,
   subject_group     TEXT,
   profile_image_url TEXT
 )
@@ -858,7 +858,7 @@ AS $$
     w.note,
     w.is_public,
     COALESCE(tp.prefix || tp.first_name || ' ' || tp.last_name, p.full_name, p.email)::text AS full_name,
-    COALESCE(tp.position, p.position, '')::text       AS position,
+    COALESCE(tp.position, p.position, '')::text       AS teacher_position,
     COALESCE(tp.subject_group, p.subject_group, '')::text AS subject_group,
     COALESCE(tp.profile_image_url, p.profile_image_url, '')::text AS profile_image_url
   FROM wpa_records w
