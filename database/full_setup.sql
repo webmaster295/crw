@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS public.school_config (
   logo_url              TEXT          DEFAULT '',
   banner_images         JSONB         DEFAULT '[]',
   show_public_bmi       BOOLEAN       DEFAULT false,
+  register_code         TEXT          DEFAULT '1234',
   updated_at            TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -474,6 +475,18 @@ CREATE INDEX IF NOT EXISTS idx_school_docs_year     ON public.school_documents(a
 -- ============================================================
 -- PART 6: RPC Functions
 -- ============================================================
+
+-- ─── 6.0 check_register_code (ใช้ตอนสมัครสมาชิก) ────────────
+CREATE OR REPLACE FUNCTION public.check_register_code(input_code text)
+RETURNS boolean
+LANGUAGE sql SECURITY DEFINER STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.school_config
+    WHERE id = 1 AND register_code = input_code
+  );
+$$;
+GRANT EXECUTE ON FUNCTION public.check_register_code(text) TO anon, authenticated;
 
 -- ─── 6.1 get_storage_usage ───────────────────────────────────
 CREATE OR REPLACE FUNCTION public.get_storage_usage()
