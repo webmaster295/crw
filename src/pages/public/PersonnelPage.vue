@@ -41,7 +41,7 @@
 
         <template v-else>
           <!-- ══ Level 1: Group Tabs (CENTERED) ══ -->
-          <div class="flex justify-center mb-6">
+          <div class="w-full flex justify-center mb-6">
             <div class="inline-flex gap-1 p-1 bg-gray-100 rounded-2xl">
               <button v-for="g in groupTabs" :key="g.key" @click="selectGroup(g.key)"
                 :class="['flex items-center gap-2 py-2.5 px-5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap',
@@ -58,7 +58,7 @@
           </div>
 
           <!-- ══ Level 2: Sub-tabs กลุ่มบริหารงาน (CENTERED) ══ -->
-          <div v-if="activeGroup === 'departments' && adminDeptGroups.length > 1"
+          <div v-if="activeGroup === 'departments' && adminDeptGroups.length >= 1"
             class="flex flex-wrap justify-center gap-2 pb-2 mb-8">
             <button v-for="g in adminDeptGroups" :key="g.name" @click="activeDept = g.name"
               :class="['px-4 py-2 rounded-xl text-sm font-medium border transition-all',
@@ -70,7 +70,7 @@
           </div>
 
           <!-- ══ Level 2: Sub-tabs กลุ่มสาระฯ + ฝ่ายสนับสนุน (CENTERED) ══ -->
-          <div v-if="activeGroup === 'subjects' && subjectGroupsData.length > 1"
+          <div v-if="activeGroup === 'subjects' && subjectGroupsData.length >= 1"
             class="flex flex-wrap justify-center gap-2 pb-2 mb-8">
             <button v-for="g in subjectGroupsData" :key="g.name" @click="activeSubject = g.name"
               :class="[
@@ -80,9 +80,9 @@
                   : g.isSupport
                     ? 'bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-400'
                     : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
-              ]"
+              ]">
               {{ groupIcon(g.name) }} {{ g.name }}
-              <span class="text-xs opacity-70">({{ (g.head ? 1 : 0) + g.members.length }})</span>
+              <span class="text-xs opacity-70 ml-1">({{ (g.head ? 1 : 0) + g.members.length }})</span>
             </button>
           </div>
 
