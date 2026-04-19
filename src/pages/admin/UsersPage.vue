@@ -295,11 +295,8 @@ async function createUser() {
       is_approved: addForm.value.is_approved,
     }, { onConflict: 'id' })
 
-    // auto-create teacher_profiles ถ้าเป็น teacher และอนุมัติทันที
-    if (addForm.value.role === 'teacher' && addForm.value.is_approved) {
-      await supabase.from('teacher_profiles')
-        .upsert({ id: data.id }, { onConflict: 'id', ignoreDuplicates: true })
-    }
+    // ไม่ auto-create teacher_profiles อีกต่อไป
+    // เพราะ teacher_profiles.id ไม่ใช่ auth UUID แล้ว (แก้ไขใน "จัดการครู" แทน)
 
     showAddModal.value = false
     showToast('✅ สร้างบัญชีสำเร็จ')
@@ -345,11 +342,8 @@ async function toggleApprove(u, val) {
 
   await supabase.from('profiles').update(updates).eq('id', u.id)
 
-  // auto-create teacher_profiles ถ้าเป็น teacher
-  if (val && (u.role === 'teacher' || u.role === 'pending')) {
-    await supabase.from('teacher_profiles')
-      .upsert({ id: u.id }, { onConflict: 'id', ignoreDuplicates: true })
-  }
+  // ไม่ auto-create teacher_profiles อีกต่อไป
+  // เพราะ teacher_profiles.id ไม่ใช่ auth UUID แล้ว (แก้ไขใน "จัดการครู" แทน)
 
   u.is_approved = val
   if (val && u.role === 'pending') u.role = 'teacher'
