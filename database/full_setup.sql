@@ -182,7 +182,7 @@ CREATE POLICY "school_config: admin update"
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS public.teacher_profiles (
-  id                    UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),  -- ไม่ผูก FK กับ auth.users เพื่อให้เพิ่มครูได้โดยไม่ต้องสร้างบัญชี
   profile_id            UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   employee_id           VARCHAR(20)  DEFAULT '',
   id_card               VARCHAR(13)  DEFAULT '',

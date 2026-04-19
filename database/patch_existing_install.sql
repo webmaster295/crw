@@ -16,8 +16,11 @@ ALTER TABLE public.profiles
 
 
 -- ============================================================
--- 2. แก้ teacher_profiles (เพิ่ม profile_id)
+-- 2. แก้ teacher_profiles
 -- ============================================================
+-- ลบ FK constraint ออกจาก id เพื่อให้เพิ่มครูได้โดยไม่ต้องสร้างบัญชี
+ALTER TABLE public.teacher_profiles DROP CONSTRAINT IF EXISTS teacher_profiles_id_fkey;
+-- เพิ่ม profile_id สำหรับเชื่อมกับบัญชีครูที่มี
 ALTER TABLE public.teacher_profiles
   ADD COLUMN IF NOT EXISTS profile_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL;
 
