@@ -525,7 +525,14 @@ async function handleSave() {
         }),
       })
       const authData = await res.json()
-      if (!res.ok) throw new Error(authData.message || 'สร้างบัญชีไม่สำเร็จ')
+      if (!res.ok) {
+        // Supabase ใช้ field 'msg' ไม่ใช่ 'message'
+        const errMsg = authData.message || authData.msg || authData.error_description || authData.error || ''
+        if (res.status === 422 && (authData.error_code === 'email_exists' || authData.error_code === 'user_already_exists' || errMsg.toLowerCase().includes('already'))) {
+          throw new Error(`อีเมล ${accountEmail.trim()} มีบัญชีในระบบแล้ว — ลองใช้อีเมลอื่น หรือเชื่อมบัญชีที่มีอยู่`)
+        }
+        throw new Error(errMsg || `สร้างบัญชีไม่สำเร็จ (${res.status})`)
+      }
 
       const newUserId = authData.id
 
