@@ -1,8 +1,17 @@
 import { ref, readonly } from 'vue'
 import { supabase, SUPABASE_URL, SUPABASE_KEY } from '../lib/supabase'
 
+const CACHE_KEY = 'school_config_v1'
+
 const config = ref(null)
 const loading = ref(false)
+
+// ── โหลด cache ทันทีตอน module ถูก import (sync, ก่อน component แรก render) ──
+// ทำให้ไม่มี flash — ครั้งแรกอาจช้าหน่อย แต่ครั้งต่อๆ ไปจะแสดงทันที
+try {
+  const cached = localStorage.getItem(CACHE_KEY)
+  if (cached) config.value = JSON.parse(cached)
+} catch (_) { /* localStorage ไม่พร้อม (private mode บางเครื่อง) */ }
 
 export function useSchoolConfig() {
   async function fetchConfig() {
@@ -13,7 +22,11 @@ export function useSchoolConfig() {
         .select('*')
         .eq('id', 1)
         .single()
-      config.value = data
+      if (data) {
+        config.value = data
+        // อัปเดต cache ทุกครั้งที่ fetch สำเร็จ
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch (_) {}
+      }
     } catch (e) {
       console.error('fetchConfig error:', e)
     } finally {
@@ -52,6 +65,10 @@ export function useSchoolConfig() {
     await fetchConfig()
   }
 
+  function clearConfigCache() {
+    try { localStorage.removeItem(CACHE_KEY) } catch (_) {}
+  }
+
   const schoolName = () => config.value?.name_th || 'โรงเรียน'
   const logoUrl = () => config.value?.logo_url || ''
   const banners = () => config.value?.banner_images || []
@@ -61,6 +78,7 @@ export function useSchoolConfig() {
     loading: readonly(loading),
     fetchConfig,
     updateConfig,
+    clearConfigCache,
     schoolName,
     logoUrl,
     banners,
