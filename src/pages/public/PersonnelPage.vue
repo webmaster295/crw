@@ -40,26 +40,28 @@
         </div>
 
         <template v-else>
-          <!-- ══ Level 1: Group Tabs ══ -->
-          <div class="flex gap-1 p-1 bg-gray-100 rounded-2xl mb-6 overflow-x-auto">
-            <button v-for="g in groupTabs" :key="g.key" @click="selectGroup(g.key)"
-              :class="['flex-shrink-0 flex items-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all whitespace-nowrap',
-                activeGroup === g.key
-                  ? 'bg-white shadow-sm text-blue-700'
-                  : 'text-gray-500 hover:text-gray-700']">
-              {{ g.icon }} {{ g.label }}
-              <span class="text-xs px-2 py-0.5 rounded-full font-bold"
-                :class="activeGroup === g.key ? 'bg-blue-100 text-blue-600' : 'bg-white/60 text-gray-400'">
-                {{ g.count }}
-              </span>
-            </button>
+          <!-- ══ Level 1: Group Tabs (CENTERED) ══ -->
+          <div class="flex justify-center mb-6">
+            <div class="inline-flex gap-1 p-1 bg-gray-100 rounded-2xl">
+              <button v-for="g in groupTabs" :key="g.key" @click="selectGroup(g.key)"
+                :class="['flex items-center gap-2 py-2.5 px-5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap',
+                  activeGroup === g.key
+                    ? 'bg-white shadow-sm text-blue-700'
+                    : 'text-gray-500 hover:text-gray-700']">
+                {{ g.icon }} {{ g.label }}
+                <span class="text-xs px-2 py-0.5 rounded-full font-bold"
+                  :class="activeGroup === g.key ? 'bg-blue-100 text-blue-600' : 'bg-white/60 text-gray-400'">
+                  {{ g.count }}
+                </span>
+              </button>
+            </div>
           </div>
 
-          <!-- ══ Level 2: Sub-tabs (กลุ่มบริหารงาน) ══ -->
+          <!-- ══ Level 2: Sub-tabs กลุ่มบริหารงาน (CENTERED) ══ -->
           <div v-if="activeGroup === 'departments' && adminDeptGroups.length > 1"
-            class="flex gap-2 overflow-x-auto pb-2 mb-8" style="-webkit-overflow-scrolling:touch">
+            class="flex flex-wrap justify-center gap-2 pb-2 mb-8">
             <button v-for="g in adminDeptGroups" :key="g.name" @click="activeDept = g.name"
-              :class="['flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium border transition-all',
+              :class="['px-4 py-2 rounded-xl text-sm font-medium border transition-all',
                 activeDept === g.name
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600']">
@@ -67,14 +69,18 @@
             </button>
           </div>
 
-          <!-- ══ Level 2: Sub-tabs (กลุ่มสาระ) ══ -->
+          <!-- ══ Level 2: Sub-tabs กลุ่มสาระฯ + ฝ่ายสนับสนุน (CENTERED) ══ -->
           <div v-if="activeGroup === 'subjects' && subjectGroupsData.length > 1"
-            class="flex gap-2 overflow-x-auto pb-2 mb-8" style="-webkit-overflow-scrolling:touch">
+            class="flex flex-wrap justify-center gap-2 pb-2 mb-8">
             <button v-for="g in subjectGroupsData" :key="g.name" @click="activeSubject = g.name"
-              :class="['flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all',
+              :class="[
+                'flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all',
                 activeSubject === g.name
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600']">
+                  : g.isSupport
+                    ? 'bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-400'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+              ]"
               {{ groupIcon(g.name) }} {{ g.name }}
               <span class="text-xs opacity-70">({{ (g.head ? 1 : 0) + g.members.length }})</span>
             </button>
@@ -115,26 +121,31 @@
             </div>
           </section>
 
-          <!-- ══ Content: กลุ่มสาระ ══ -->
+          <!-- ══ Content: กลุ่มสาระฯ (รวมฝ่ายสนับสนุน) ══ -->
           <section v-else-if="activeGroup === 'subjects' && currentSubjectGroup">
-            <!-- หัวหน้ากลุ่มสาระ -->
-            <div v-if="currentSubjectGroup.head" class="flex justify-center mb-8">
-              <PersonCard :teacher="currentSubjectGroup.head" size="md"
-                extra-label="⭐ หัวหน้ากลุ่มสาระ" extra-label-color="text-indigo-600" />
-            </div>
-            <!-- สมาชิก -->
-            <div v-if="currentSubjectGroup.members.length" class="flex flex-wrap justify-center gap-3">
-              <PersonCard v-for="t in currentSubjectGroup.members" :key="t.id" :teacher="t" size="sm"
-                :extra-label="t.group_role === 'รองหัวหน้ากลุ่มสาระ' ? '★ รองหัวหน้ากลุ่มสาระ' : ''"
-                extra-label-color="text-indigo-500" />
-            </div>
-          </section>
-
-          <!-- ══ Content: ฝ่ายสนับสนุน ══ -->
-          <section v-else-if="activeGroup === 'support'">
-            <div class="flex flex-wrap justify-center gap-3">
-              <PersonCard v-for="t in otherStaff" :key="t.id" :teacher="t" size="sm" />
-            </div>
+            <!-- ฝ่ายสนับสนุน (isSupport flag) -->
+            <template v-if="currentSubjectGroup.isSupport">
+              <p class="text-center text-xs text-gray-400 font-medium uppercase tracking-widest mb-6">
+                👷 บุคลากรสนับสนุน
+              </p>
+              <div class="flex flex-wrap justify-center gap-3">
+                <PersonCard v-for="t in currentSubjectGroup.members" :key="t.id" :teacher="t" size="sm" />
+              </div>
+            </template>
+            <!-- กลุ่มสาระปกติ -->
+            <template v-else>
+              <!-- หัวหน้ากลุ่มสาระ -->
+              <div v-if="currentSubjectGroup.head" class="flex justify-center mb-8">
+                <PersonCard :teacher="currentSubjectGroup.head" size="md"
+                  extra-label="⭐ หัวหน้ากลุ่มสาระ" extra-label-color="text-indigo-600" />
+              </div>
+              <!-- สมาชิก -->
+              <div v-if="currentSubjectGroup.members.length" class="flex flex-wrap justify-center gap-3">
+                <PersonCard v-for="t in currentSubjectGroup.members" :key="t.id" :teacher="t" size="sm"
+                  :extra-label="t.group_role === 'รองหัวหน้ากลุ่มสาระ' ? '★ รองหัวหน้ากลุ่มสาระ' : ''"
+                  extra-label-color="text-indigo-500" />
+              </div>
+            </template>
           </section>
 
         </template>
@@ -254,6 +265,7 @@ const GROUP_ICONS = {
   'ภาษาไทย': '📚', 'คณิตศาสตร์': '🔢', 'วิทยาศาสตร์และเทคโนโลยี': '🔬',
   'สังคมศึกษาฯ': '🌍', 'ภาษาต่างประเทศ': '🌐', 'สุขศึกษาและพลศึกษา': '⚽',
   'ศิลปะ': '🎨', 'การงานอาชีพ': '🔧', 'กิจกรรมพัฒนาผู้เรียน': '🌱',
+  'ฝ่ายสนับสนุน': '👷',
 }
 
 // ── State ─────────────────────────────────────────────────────
@@ -362,7 +374,7 @@ const currentDeptGroup = computed(() =>
   adminDeptGroups.value.find(g => g.name === activeDept.value) || adminDeptGroups.value[0] || null
 )
 
-// ── Computed: กลุ่มสาระ ───────────────────────────────────────
+// ── Computed: กลุ่มสาระ + ฝ่ายสนับสนุน (sub-tab สุดท้าย) ────
 const subjectGroupsData = computed(() => {
   const teachers = allTeachers.value.filter(
     t => t.subject_group && !EXEC_POSITIONS.includes(t.position) && !SUPPORT_POSITIONS.includes(t.position)
@@ -377,11 +389,23 @@ const subjectGroupsData = computed(() => {
     const headIdx = sorted.findIndex(t => t.group_role === 'หัวหน้ากลุ่มสาระ')
     const head    = headIdx >= 0 ? sorted[headIdx] : null
     const members = sorted.filter((_, i) => i !== headIdx)
-    return { name, head, members }
+    return { name, head, members, isSupport: false }
   }
   const result = []
   for (const g of SUBJECT_GROUP_ORDER) { if (map[g]) result.push(build(g, map[g])) }
   for (const g of Object.keys(map))    { if (!SUBJECT_GROUP_ORDER.includes(g)) result.push(build(g, map[g])) }
+
+  // ── ฝ่ายสนับสนุน เป็น sub-tab สุดท้าย ──
+  const supportList = sortTeachers(
+    allTeachers.value.filter(
+      t => SUPPORT_POSITIONS.includes(t.position) ||
+           (!t.subject_group && !EXEC_POSITIONS.includes(t.position) && (t.position || '').trim() !== '')
+    )
+  )
+  if (supportList.length > 0) {
+    result.push({ name: 'ฝ่ายสนับสนุน', head: null, members: supportList, isSupport: true })
+  }
+
   return result
 })
 
@@ -389,17 +413,7 @@ const currentSubjectGroup = computed(() =>
   subjectGroupsData.value.find(g => g.name === activeSubject.value) || subjectGroupsData.value[0] || null
 )
 
-// ── Computed: สนับสนุน ────────────────────────────────────────
-const otherStaff = computed(() =>
-  sortTeachers(
-    allTeachers.value.filter(
-      t => SUPPORT_POSITIONS.includes(t.position) ||
-           (!t.subject_group && !EXEC_POSITIONS.includes(t.position))
-    )
-  )
-)
-
-// ── Computed: Group Tabs ──────────────────────────────────────
+// ── Computed: Group Tabs (3 แถบ) ─────────────────────────────
 const groupTabs = computed(() => [
   {
     key: 'executives', icon: '🏫', label: 'ผู้บริหาร',
@@ -410,12 +424,8 @@ const groupTabs = computed(() => [
     count: adminDeptGroups.value.length,
   },
   {
-    key: 'subjects', icon: '📚', label: 'กลุ่มสาระ',
+    key: 'subjects', icon: '📚', label: 'กลุ่มสาระฯ',
     count: subjectGroupsData.value.length,
-  },
-  {
-    key: 'support', icon: '👷', label: 'ฝ่ายสนับสนุน',
-    count: otherStaff.value.length,
   },
 ].filter(t => t.count > 0))
 
@@ -448,7 +458,10 @@ onMounted(async () => {
         .select('teacher_id, department_name, department_role'),
     ])
     if (error) throw error
-    allTeachers.value = teachers || []
+
+    // กรองเฉพาะ record ที่มีชื่อ (ป้องกัน blank record จากอดีต)
+    allTeachers.value = (teachers || []).filter(t => (t.first_name || '').trim() || (t.last_name || '').trim())
+
     const m = {}
     for (const d of (depts || [])) {
       if (!m[d.teacher_id]) m[d.teacher_id] = []
