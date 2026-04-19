@@ -15,13 +15,21 @@
         <div class="flex items-center h-16 gap-4">
           <!-- Logo + Name -->
           <RouterLink to="/" class="flex items-center gap-3 flex-shrink-0">
+            <!-- โลโก้ -->
             <img v-if="config?.logo_url" :src="config.logo_url" class="w-12 h-12 object-contain" />
-            <div v-else class="w-12 h-12 rounded-full flex items-center justify-center" :style="navStyle.loginBtn">
+            <div v-else-if="config" class="w-12 h-12 rounded-full flex items-center justify-center" :style="navStyle.loginBtn">
               <span class="text-white text-lg font-bold">ร</span>
             </div>
-            <div class="block">
-              <p class="font-bold text-gray-900 text-sm leading-tight line-clamp-1 max-w-[160px] sm:max-w-xs md:max-w-none">{{ config?.name_th || 'โรงเรียน' }}</p>
-              <p class="text-xs text-gray-500 hidden md:block">{{ config?.area_name || '' }}</p>
+            <div v-else class="w-12 h-12 rounded-full bg-gray-200 animate-pulse" />
+
+            <!-- ชื่อโรงเรียน: skeleton ขณะยังไม่โหลด -->
+            <div v-if="config" class="block">
+              <p class="font-bold text-gray-900 text-sm leading-tight line-clamp-1 max-w-[160px] sm:max-w-xs md:max-w-none">{{ config.name_th }}</p>
+              <p class="text-xs text-gray-500 hidden md:block">{{ config.area_name || '' }}</p>
+            </div>
+            <div v-else class="block space-y-1.5">
+              <div class="h-4 w-36 bg-gray-200 animate-pulse rounded" />
+              <div class="h-3 w-24 bg-gray-100 animate-pulse rounded hidden md:block" />
             </div>
           </RouterLink>
 
