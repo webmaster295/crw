@@ -18,6 +18,9 @@ ALTER TABLE public.profiles
 -- ============================================================
 -- 2. แก้ teacher_profiles
 -- ============================================================
+-- เพิ่ม sort_order สำหรับกำหนดตำแหน่งแสดงผล
+ALTER TABLE public.teacher_profiles
+  ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 100;
 -- ลบ FK constraint ออกจาก id เพื่อให้เพิ่มครูได้โดยไม่ต้องสร้างบัญชี
 ALTER TABLE public.teacher_profiles DROP CONSTRAINT IF EXISTS teacher_profiles_id_fkey;
 -- เพิ่ม user_id สำหรับเชื่อมกับ auth account (nullable)

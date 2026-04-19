@@ -290,6 +290,14 @@
               </div>
             </div>
 
+            <!-- ลำดับการแสดงผล -->
+            <div class="flex items-center gap-3">
+              <label class="label whitespace-nowrap">📌 ลำดับแสดงผล</label>
+              <input v-model.number="teacherForm.sort_order" type="number" min="1" max="999"
+                class="input-field w-24 text-center" placeholder="100" />
+              <p class="text-xs text-gray-400">น้อย = แสดงก่อน (ผอ.=1, รองผอ.=2,...)</p>
+            </div>
+
             <!-- บัญชีผู้ใช้ -->
             <div class="bg-blue-50 rounded-xl p-4 space-y-3">
               <div class="flex items-center justify-between">
@@ -412,6 +420,7 @@ const emptyForm = () => ({
   id_card: '', phone: '', email: '', birth_date: '',
   education_level: '', education_major: '', education_institution: '',
   website_url: '', profile_id: '', profile_image_url: '',
+  sort_order: 100,
   // บัญชีผู้ใช้
   createAccount:   false,
   accountEmail:    '',
@@ -480,6 +489,7 @@ async function openEdit(t) {
     website_url:             t.website_url             || '',
     profile_id:              t.profile_id              || '',
     profile_image_url:       t.profile_image_url       || '',
+    sort_order:              t.sort_order              ?? 100,
   }
   // โหลด dept assignments
   const { data } = await supabase

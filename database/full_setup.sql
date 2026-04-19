@@ -204,6 +204,7 @@ CREATE TABLE IF NOT EXISTS public.teacher_profiles (
   start_date            DATE,
   website_url           TEXT         DEFAULT '',
   profile_image_url     TEXT         DEFAULT '',
+  sort_order            INTEGER      DEFAULT 100,  -- เรียงลำดับแสดงผลในแต่ละกลุ่ม (น้อย=แสดงก่อน)
   created_at            TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at            TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -262,7 +262,7 @@ const adminDeptList = computed(() =>
 onMounted(async () => {
   try {
     const [{ data: teachers, error }, { data: depts }] = await Promise.all([
-      supabase.from('teacher_profiles').select('*').order('first_name'),
+      supabase.from('teacher_profiles').select('*').order('sort_order', { nullsFirst: false }).order('first_name'),
       supabase.from('teacher_department_assignments').select('teacher_id, department_name, department_role'),
     ])
     if (error) throw error
@@ -294,6 +294,9 @@ function groupIcon(name) {
 }
 function sortTeachers(list) {
   return [...list].sort((a, b) => {
+    // sort_order ก่อน (ถ้ากำหนด) → แล้วค่อย role/วิทยฐานะ/ชื่อ
+    const oA = a.sort_order ?? 100, oB = b.sort_order ?? 100
+    if (oA !== oB) return oA - oB
     const rA = GROUP_ROLE_ORDER[a.group_role ?? ''] ?? 2
     const rB = GROUP_ROLE_ORDER[b.group_role ?? ''] ?? 2
     if (rA !== rB) return rA - rB
@@ -339,7 +342,11 @@ const director = computed(() =>
 const viceDirectors = computed(() =>
   allTeachers.value
     .filter(t => t.position === 'รองผู้อำนวยการ')
-    .sort((a, b) => (a.first_name ?? '').localeCompare(b.first_name ?? '', 'th'))
+    .sort((a, b) => {
+      const oA = a.sort_order ?? 100, oB = b.sort_order ?? 100
+      if (oA !== oB) return oA - oB
+      return (a.first_name ?? '').localeCompare(b.first_name ?? '', 'th')
+    })
 )
 
 // executives รวม (ใช้ตรวจสอบว่ามีหรือไม่)
