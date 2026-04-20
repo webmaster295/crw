@@ -130,11 +130,6 @@ onMounted(async () => {
   const { data } = await supabase.rpc('get_checkpoint_stats', { p_session_id: latest.id })
   stats.value = data || null
 
-  // ตั้ง observer หลังข้อมูลโหลดเสร็จ
-  const observer = new IntersectionObserver(
-    ([entry]) => { if (entry.isIntersecting) { startAllCountUps(); observer.disconnect() } },
-    { threshold: 0.2 }
-  )
-  if (sectionRef.value) observer.observe(sectionRef.value)
+  // (IntersectionObserver / count-up removed — sectionRef was not declared)
 })
 </script>

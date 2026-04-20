@@ -434,11 +434,28 @@ const filteredTableRows = computed(() => {
 
 const filteredTotals = computed(() => {
   const dataRows = filteredTableRows.value.filter(r => !r.isLevel)
-  return {
+  const fromRoom = {
     total:  dataRows.reduce((s, r) => s + (r.total  || 0), 0),
     male:   dataRows.reduce((s, r) => s + (r.male   || 0), 0),
     female: dataRows.reduce((s, r) => s + (r.female || 0), 0),
   }
+  // fallback: ถ้า byRoom ว่าง (room = NULL ทั้งหมด) ใช้ byLevelGender แทน
+  if (fromRoom.total === 0 && stats.value?.byLevelGender) {
+    const lvl = stats.value.byLevelGender
+    const groupLevels = filterGroup.value
+      ? (eduGroups.find(g => g.key === filterGroup.value)?.levels || null)
+      : null
+    let total = 0, male = 0, female = 0
+    for (const [l, d] of Object.entries(lvl)) {
+      if (filterLevel.value && l !== filterLevel.value) continue
+      if (groupLevels && !groupLevels.includes(l)) continue
+      total  += d.total  || 0
+      male   += d.male   || 0
+      female += d.female || 0
+    }
+    return { total, male, female }
+  }
+  return fromRoom
 })
 
 const filteredRoomCount = computed(() =>

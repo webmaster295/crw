@@ -859,15 +859,21 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_sis_sessions() TO anon, authenticated;
 
 -- ─── get_checkpoint_stats (สถิตินักเรียนตาม session) ─────────
+-- byLevel  = จำนวนต่อชั้น (ใช้แสดง chip กรอง)
+-- byRoom   = จำนวนต่อชั้น/ห้อง พร้อม male/female (ใช้ตาราง + dashboard)
+--            รวม room IS NULL ไว้ใน key "<grade>/0" เพื่อไม่ให้หาย
+-- byLevelGender = male/female สรุปต่อชั้น (fallback กรณี room ว่าง)
 DROP FUNCTION IF EXISTS public.get_checkpoint_stats(UUID);
 CREATE OR REPLACE FUNCTION public.get_checkpoint_stats(p_session_id UUID)
 RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public
 AS $$
 DECLARE
-  v_by_level jsonb;
-  v_by_room  jsonb;
+  v_by_level        jsonb;
+  v_by_room         jsonb;
+  v_by_level_gender jsonb;
 BEGIN
+  -- นับต่อชั้น (ทุก record แม้ room = NULL)
   SELECT jsonb_object_agg(grade_level, cnt)
   INTO v_by_level
   FROM (
@@ -878,11 +884,12 @@ BEGIN
     GROUP BY grade_level
   ) t;
 
+  -- นับต่อชั้น+ห้อง พร้อมเพศ (room NULL → ใส่ key เป็น "<grade>/0")
   SELECT jsonb_object_agg(room_key, stats)
   INTO v_by_room
   FROM (
     SELECT
-      grade_level || '/' || room::text AS room_key,
+      grade_level || '/' || COALESCE(room::text, '0') AS room_key,
       jsonb_build_object(
         'total',  COUNT(*),
         'male',   COUNT(*) FILTER (WHERE gender IN ('ชาย', 'ช', 'male')),
@@ -891,13 +898,29 @@ BEGIN
     FROM student_snapshots
     WHERE import_session_id = p_session_id
       AND grade_level IS NOT NULL AND grade_level <> ''
-      AND room IS NOT NULL
     GROUP BY grade_level, room
   ) t;
 
+  -- สรุปเพศต่อชั้น (ไม่บังคับ room) — ใช้เป็น fallback
+  SELECT jsonb_object_agg(grade_level, stats)
+  INTO v_by_level_gender
+  FROM (
+    SELECT grade_level,
+      jsonb_build_object(
+        'total',  COUNT(*),
+        'male',   COUNT(*) FILTER (WHERE gender IN ('ชาย', 'ช', 'male')),
+        'female', COUNT(*) FILTER (WHERE gender IN ('หญิง', 'ญ', 'female'))
+      ) AS stats
+    FROM student_snapshots
+    WHERE import_session_id = p_session_id
+      AND grade_level IS NOT NULL AND grade_level <> ''
+    GROUP BY grade_level
+  ) t;
+
   RETURN jsonb_build_object(
-    'byLevel', COALESCE(v_by_level, '{}'::jsonb),
-    'byRoom',  COALESCE(v_by_room,  '{}'::jsonb)
+    'byLevel',        COALESCE(v_by_level,        '{}'::jsonb),
+    'byRoom',         COALESCE(v_by_room,         '{}'::jsonb),
+    'byLevelGender',  COALESCE(v_by_level_gender, '{}'::jsonb)
   );
 END;
 $$;
