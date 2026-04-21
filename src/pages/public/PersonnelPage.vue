@@ -97,8 +97,34 @@
             </div>
           </div>
 
+          <!-- ══ Content: ทั้งหมด ══ -->
+          <section v-if="activeGroup === 'all'">
+            <!-- ผอ. — การ์ดใหญ่กลางจอ -->
+            <div v-if="director" class="flex justify-center mb-8">
+              <PersonCard :teacher="director" size="lg" />
+            </div>
+            <!-- รอง ผอ. -->
+            <div v-if="viceDirectors.length" class="mb-8">
+              <p class="text-center text-xs text-gray-400 font-medium uppercase tracking-widest mb-4">รองผู้อำนวยการโรงเรียน</p>
+              <div class="flex flex-wrap justify-center gap-5">
+                <PersonCard v-for="t in viceDirectors" :key="t.id" :teacher="t" size="md" />
+              </div>
+            </div>
+            <!-- ครูและบุคลากรทุกคน -->
+            <div v-if="nonExecTeachers.length">
+              <p v-if="director || viceDirectors.length"
+                class="text-center text-xs text-gray-400 font-medium uppercase tracking-widest mb-6">
+                ครูและบุคลากร
+              </p>
+              <div class="flex flex-wrap justify-center gap-3">
+                <PersonCard v-for="t in nonExecTeachers" :key="t.id" :teacher="t" size="sm"
+                  :extra-label="allTabLabel(t)" extra-label-color="text-indigo-500" />
+              </div>
+            </div>
+          </section>
+
           <!-- ══ Content: ผู้บริหาร ══ -->
-          <section v-if="activeGroup === 'executives'">
+          <section v-else-if="activeGroup === 'executives'">
             <!-- ผอ. — การ์ดใหญ่กลางจอ -->
             <div v-if="director" class="flex justify-center mb-10">
               <PersonCard :teacher="director" size="lg" />
@@ -266,6 +292,9 @@ const PersonCard = defineComponent({
   },
 })
 
+// ── Auto-detect threshold ─────────────────────────────────────
+const AUTO_ALL_THRESHOLD = 20   // ≤ คนนี้ → default tab "ทั้งหมด"
+
 // ── Constants ─────────────────────────────────────────────────
 const SUBJECT_GROUP_ORDER = [
   'ภาษาไทย','คณิตศาสตร์','วิทยาศาสตร์และเทคโนโลยี','สังคมศึกษาฯ',
@@ -365,6 +394,20 @@ const viceDirectors = computed(() =>
     })
 )
 
+// ── Computed: ทั้งหมด ─────────────────────────────────────────
+// ครูและบุคลากรที่ไม่ใช่ผู้บริหาร เรียงตาม sort_order → standing → ชื่อ
+const nonExecTeachers = computed(() =>
+  sortTeachers(allTeachers.value.filter(t => !EXEC_POSITIONS.includes(t.position)))
+)
+
+// extraLabel ในหน้า "ทั้งหมด" — แสดงกลุ่มสาระ/บทบาทโดยไม่ซ้ำกับ position
+function allTabLabel(t) {
+  if (t.group_role === 'หัวหน้ากลุ่มสาระ')    return `⭐ หัวหน้า ${t.subject_group || 'กลุ่มสาระ'}`
+  if (t.group_role === 'รองหัวหน้ากลุ่มสาระ') return `★ รองหัวหน้า ${t.subject_group || 'กลุ่มสาระ'}`
+  if (t.subject_group) return `${groupIcon(t.subject_group)} ${t.subject_group}`
+  return ''
+}
+
 // ── Computed: กลุ่มบริหารงาน ──────────────────────────────────
 const adminDeptGroups = computed(() =>
   adminDeptList.value.map(deptName => {
@@ -448,8 +491,12 @@ const filteredSubjectGroup = computed(() => {
   }
 })
 
-// ── Computed: Group Tabs (3 แถบ) ─────────────────────────────
+// ── Computed: Group Tabs ──────────────────────────────────────
 const groupTabs = computed(() => [
+  {
+    key: 'all', icon: '👥', label: 'ทั้งหมด',
+    count: allTeachers.value.length,
+  },
   {
     key: 'executives', icon: '🏫', label: 'ผู้บริหาร',
     count: (director.value ? 1 : 0) + viceDirectors.value.length,
@@ -499,6 +546,11 @@ onMounted(async () => {
 
     // กรองเฉพาะ record ที่มีชื่อ (ป้องกัน blank record จากอดีต)
     allTeachers.value = (teachers || []).filter(t => (t.first_name || '').trim() || (t.last_name || '').trim())
+
+    // Auto-detect: โรงเรียนเล็ก → เปิด tab "ทั้งหมด" เป็น default
+    if (allTeachers.value.length <= AUTO_ALL_THRESHOLD) {
+      activeGroup.value = 'all'
+    }
 
     const m = {}
     for (const d of (depts || [])) {
