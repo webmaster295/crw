@@ -42,7 +42,7 @@
         <template v-else>
           <!-- ══ Level 1: Group Tabs (CENTERED) ══ -->
           <div class="w-full flex justify-center mb-6">
-            <div class="inline-flex gap-1 p-1 bg-gray-100 rounded-2xl">
+            <div class="flex flex-wrap justify-center gap-1 p-1 bg-gray-100 rounded-2xl">
               <button v-for="g in groupTabs" :key="g.key" @click="selectGroup(g.key)"
                 :class="['flex items-center gap-2 py-2.5 px-5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap',
                   activeGroup === g.key
@@ -86,6 +86,17 @@
             </button>
           </div>
 
+          <!-- ══ Search bar: กลุ่มสาระ ══ -->
+          <div v-if="activeGroup === 'subjects'" class="flex justify-center mb-6">
+            <div class="relative w-full max-w-xs">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">🔍</span>
+              <input v-model="searchQuery" type="text" placeholder="ค้นหาชื่อบุคลากร..."
+                class="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition" />
+              <button v-if="searchQuery" @click="searchQuery = ''"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm leading-none">✕</button>
+            </div>
+          </div>
+
           <!-- ══ Content: ผู้บริหาร ══ -->
           <section v-if="activeGroup === 'executives'">
             <!-- ผอ. — การ์ดใหญ่กลางจอ -->
@@ -122,26 +133,33 @@
           </section>
 
           <!-- ══ Content: กลุ่มสาระฯ (รวมฝ่ายสนับสนุน) ══ -->
-          <section v-else-if="activeGroup === 'subjects' && currentSubjectGroup">
+          <section v-else-if="activeGroup === 'subjects' && filteredSubjectGroup">
+            <!-- ไม่พบผลการค้นหา -->
+            <div v-if="searchQuery && !filteredSubjectGroup.head && !filteredSubjectGroup.members.length"
+              class="text-center py-16 text-gray-400">
+              <div class="text-4xl mb-2">🔍</div>
+              <p class="font-medium">ไม่พบชื่อ "{{ searchQuery }}"</p>
+              <button @click="searchQuery = ''" class="mt-3 text-sm text-blue-500 hover:underline">ล้างการค้นหา</button>
+            </div>
             <!-- ฝ่ายสนับสนุน (isSupport flag) -->
-            <template v-if="currentSubjectGroup.isSupport">
+            <template v-else-if="filteredSubjectGroup.isSupport">
               <p class="text-center text-xs text-gray-400 font-medium uppercase tracking-widest mb-6">
                 👷 บุคลากรสนับสนุน
               </p>
               <div class="flex flex-wrap justify-center gap-3">
-                <PersonCard v-for="t in currentSubjectGroup.members" :key="t.id" :teacher="t" size="sm" />
+                <PersonCard v-for="t in filteredSubjectGroup.members" :key="t.id" :teacher="t" size="sm" />
               </div>
             </template>
             <!-- กลุ่มสาระปกติ -->
             <template v-else>
               <!-- หัวหน้ากลุ่มสาระ -->
-              <div v-if="currentSubjectGroup.head" class="flex justify-center mb-8">
-                <PersonCard :teacher="currentSubjectGroup.head" size="md"
+              <div v-if="filteredSubjectGroup.head" class="flex justify-center mb-8">
+                <PersonCard :teacher="filteredSubjectGroup.head" size="md"
                   extra-label="⭐ หัวหน้ากลุ่มสาระ" extra-label-color="text-indigo-600" />
               </div>
               <!-- สมาชิก -->
-              <div v-if="currentSubjectGroup.members.length" class="flex flex-wrap justify-center gap-3">
-                <PersonCard v-for="t in currentSubjectGroup.members" :key="t.id" :teacher="t" size="sm"
+              <div v-if="filteredSubjectGroup.members.length" class="flex flex-wrap justify-center gap-3">
+                <PersonCard v-for="t in filteredSubjectGroup.members" :key="t.id" :teacher="t" size="sm"
                   :extra-label="t.group_role === 'รองหัวหน้ากลุ่มสาระ' ? '★ รองหัวหน้ากลุ่มสาระ' : ''"
                   extra-label-color="text-indigo-500" />
               </div>
@@ -277,6 +295,7 @@ const fetchError  = ref('')
 const activeGroup   = ref('executives')
 const activeDept    = ref('')
 const activeSubject = ref('')
+const searchQuery   = ref('')
 
 // ── Config ────────────────────────────────────────────────────
 const DEFAULT_DEPTS = ['กลุ่มบริหารวิชาการ','กลุ่มบริหารงบประมาณ','กลุ่มบริหารงานบุคคล','กลุ่มบริหารทั่วไป']
@@ -413,6 +432,22 @@ const currentSubjectGroup = computed(() =>
   subjectGroupsData.value.find(g => g.name === activeSubject.value) || subjectGroupsData.value[0] || null
 )
 
+const filteredSubjectGroup = computed(() => {
+  const g = currentSubjectGroup.value
+  if (!g) return null
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return g
+  const match = t =>
+    (t.first_name || '').toLowerCase().includes(q) ||
+    (t.last_name  || '').toLowerCase().includes(q) ||
+    (t.prefix     || '').toLowerCase().includes(q)
+  return {
+    ...g,
+    head:    g.head && match(g.head) ? g.head : null,
+    members: g.members.filter(match),
+  }
+})
+
 // ── Computed: Group Tabs (3 แถบ) ─────────────────────────────
 const groupTabs = computed(() => [
   {
@@ -446,6 +481,9 @@ watch(adminDeptGroups, (list) => {
 watch(subjectGroupsData, (list) => {
   if (!activeSubject.value && list.length) activeSubject.value = list[0].name
 }, { immediate: true })
+
+watch(activeSubject, () => { searchQuery.value = '' })
+watch(activeGroup,   () => { searchQuery.value = '' })
 
 // ── Fetch ─────────────────────────────────────────────────────
 onMounted(async () => {
