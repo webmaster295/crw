@@ -293,6 +293,96 @@
           </template>
         </div>
 
+        <!-- ══ เปรียบเทียบสถิตินักเรียน ══════════════════════════════════════════ -->
+        <div v-if="showPublicSIS" class="mt-8">
+          <div class="flex items-center gap-3 mb-5">
+            <span class="w-1.5 h-6 bg-indigo-500 rounded-full inline-block"></span>
+            <h2 class="font-bold text-gray-900 text-lg">📊 เปรียบเทียบสถิตินักเรียน</h2>
+            <span v-if="sisLoading" class="text-xs text-gray-400 animate-pulse">กำลังโหลด...</span>
+          </div>
+
+          <div v-if="sisLoading" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
+            <div class="w-10 h-10 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p class="text-gray-400 text-sm">กำลังโหลดข้อมูล...</p>
+          </div>
+
+          <div v-else-if="!sisSessions.length" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center text-gray-400">
+            <div class="text-4xl mb-3">📊</div><p>ยังไม่มีข้อมูลสถิติ</p>
+          </div>
+
+          <template v-else>
+            <!-- SVG Bar + Trend Chart -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+              <div class="flex items-center justify-between mb-3">
+                <p class="text-sm font-semibold text-gray-700">จำนวนนักเรียนรวมแต่ละปี</p>
+                <div class="flex items-center gap-3 text-xs text-gray-400">
+                  <span class="flex items-center gap-1"><span class="w-6 h-2.5 rounded bg-indigo-400 inline-block"></span>รวม</span>
+                  <span class="flex items-center gap-1">
+                    <svg width="18" height="8"><line x1="0" y1="4" x2="18" y2="4" stroke="#f97316" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="4" r="2.5" fill="white" stroke="#f97316" stroke-width="1.5"/></svg>
+                    แนวโน้ม
+                  </span>
+                </div>
+              </div>
+              <div class="w-full overflow-x-auto">
+                <svg :viewBox="`0 0 ${SC.W} ${SC.H}`" class="w-full" style="min-width:280px;overflow:visible">
+                  <defs>
+                    <linearGradient id="pubSisGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="#4f46e5"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- Y-axis grid -->
+                  <g v-for="tick in sisTicks" :key="tick.v">
+                    <line :x1="SC.PL" :y1="tick.y" :x2="SC.W-SC.PR" :y2="tick.y"
+                      :stroke="tick.v===0?'#cbd5e1':'#f1f5f9'" :stroke-width="tick.v===0?1.5:1"/>
+                    <text :x="SC.PL-5" :y="tick.y+4" text-anchor="end" font-size="9" fill="#94a3b8">{{ tick.label }}</text>
+                  </g>
+                  <!-- Bars -->
+                  <g v-for="bar in sisBars" :key="bar.s.id">
+                    <rect :x="bar.x" :y="bar.y" :width="bar.w" :height="bar.h" rx="4" fill="url(#pubSisGrad)" opacity="0.9"/>
+                    <text v-if="bar.h > 18" :x="bar.cx" :y="bar.y-4" text-anchor="middle" font-size="9" font-weight="700" fill="#4f46e5">
+                      {{ bar.val >= 1000 ? `${(bar.val/1000).toFixed(1)}k` : bar.val }}
+                    </text>
+                    <text :x="bar.cx" :y="SC.H-SC.PB+14" text-anchor="middle" font-size="9" fill="#475569" font-weight="600">{{ bar.s.academic_year }}</text>
+                    <text v-if="bar.s.checkpoint_label" :x="bar.cx" :y="SC.H-SC.PB+25" text-anchor="middle" font-size="7.5" fill="#94a3b8">
+                      {{ bar.s.checkpoint_label.length > 12 ? bar.s.checkpoint_label.slice(0,11)+'…' : bar.s.checkpoint_label }}
+                    </text>
+                  </g>
+                  <!-- Trend -->
+                  <path v-if="sisTrend" :d="sisTrend" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle v-for="bar in sisBars" :key="'d'+bar.s.id" :cx="bar.cx" :cy="bar.ty" r="4" fill="white" stroke="#f97316" stroke-width="2"/>
+                  <!-- Axes -->
+                  <line :x1="SC.PL" :y1="SC.PT" :x2="SC.PL" :y2="SC.H-SC.PB" stroke="#e2e8f0" stroke-width="1.5"/>
+                  <line :x1="SC.PL" :y1="SC.H-SC.PB" :x2="SC.W-SC.PR" :y2="SC.H-SC.PB" stroke="#e2e8f0" stroke-width="1.5"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- ตารางสรุป -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                  <tr>
+                    <th class="py-2.5 px-4 text-left">รอบข้อมูล</th>
+                    <th class="py-2.5 px-4 text-center">ปี</th>
+                    <th class="py-2.5 px-4 text-center font-bold text-gray-700">รวม</th>
+                    <th class="py-2.5 px-4 text-center">👦 ชาย</th>
+                    <th class="py-2.5 px-4 text-center">👧 หญิง</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="s in [...sisSessions].reverse()" :key="'pub-'+s.id" class="border-b border-gray-50">
+                    <td class="py-2.5 px-4 text-gray-700 text-xs">{{ s.checkpoint_label || `ช่วง ${s.checkpoint}` }}</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-indigo-600">{{ s.academic_year }}</td>
+                    <td class="py-2.5 px-4 text-center font-black text-gray-900">{{ (s.stats_json?.total||0).toLocaleString() }}</td>
+                    <td class="py-2.5 px-4 text-center text-sky-500">{{ (s.stats_json?.male||0).toLocaleString() }}</td>
+                    <td class="py-2.5 px-4 text-center text-pink-500">{{ (s.stats_json?.female||0).toLocaleString() }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
+
       </template>
     </div>
   </PublicLayout>
@@ -306,8 +396,56 @@ import { supabase } from '../../lib/supabase'
 
 const { config, fetchConfig } = useSchoolConfig()
 const showPublicBMI = ref(false)
+const showPublicSIS = ref(false)
 const loading       = ref(true)
 const stats         = ref(null)
+
+// ── เปรียบเทียบสถิติ (SIS) ────────────────────────────────────────────────────
+const sisLoading  = ref(false)
+const sisSessions = ref([])   // เรียงเก่า→ใหม่
+
+const SC = { W: 680, H: 230, PL: 46, PR: 16, PT: 18, PB: 44 }
+
+const sisMax = computed(() =>
+  Math.max(...sisSessions.value.map(s => s.stats_json?.total || 0), 1)
+)
+function sisTyAt(val) {
+  return SC.PT + (SC.H - SC.PT - SC.PB) * (1 - val / sisMax.value)
+}
+const sisTicks = computed(() => {
+  const max = sisMax.value
+  let step = Math.pow(10, Math.floor(Math.log10(max / 4)))
+  if (max / step > 8) step *= 2
+  const ticks = []
+  for (let v = 0; v <= max * 1.08; v += step)
+    ticks.push({ v, y: sisTyAt(v), label: v >= 1000 ? `${(v/1000).toFixed(v%1000===0?0:1)}k` : v })
+  return ticks
+})
+const sisBars = computed(() => {
+  const n = sisSessions.value.length
+  if (!n) return []
+  const slotW = (SC.W - SC.PL - SC.PR) / n
+  const barW  = Math.min(slotW * 0.52, 50)
+  return sisSessions.value.map((s, i) => {
+    const cx = SC.PL + slotW * i + slotW / 2
+    const val = s.stats_json?.total || 0
+    const ty  = sisTyAt(val)
+    return { s, cx, x: cx - barW / 2, y: ty, w: barW, h: SC.H - SC.PB - ty, val, ty }
+  })
+})
+const sisTrend = computed(() => {
+  if (sisBars.value.length < 2) return ''
+  return sisBars.value.map((b, i) => `${i===0?'M':'L'}${b.cx},${b.ty}`).join(' ')
+})
+
+async function loadSisSessions() {
+  sisLoading.value = true
+  try {
+    const { data } = await supabase.rpc('get_public_sis_sessions')
+    sisSessions.value = Array.isArray(data) ? data : []
+  } catch (e) { console.error(e) }
+  finally { sisLoading.value = false }
+}
 
 const filterGroup = ref('')
 const filterLevel = ref('')
@@ -531,16 +669,15 @@ async function loadPublicBMI() {
 }
 
 onMounted(async () => {
-  // โหลด config ก่อนเพื่อเช็คว่าเปิดแสดง BMI สาธารณะหรือไม่
   await fetchConfig()
   showPublicBMI.value = config.value?.show_public_bmi ?? false
+  showPublicSIS.value = config.value?.show_public_sis_comparison ?? false
 
-  // อ่านจาก students table โดยตรง (ไม่ต้องผ่าน import_sessions)
   const { data } = await supabase.rpc('get_current_student_stats')
   stats.value = data || null
   loading.value = false
 
-  // โหลด BMI เฉพาะเมื่อ admin เปิดใช้งาน
   if (showPublicBMI.value) loadPublicBMI()
+  if (showPublicSIS.value) loadSisSessions()
 })
 </script>

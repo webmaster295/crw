@@ -630,3 +630,36 @@ AS $$
     AND height IS NOT NULL;
 $$;
 GRANT EXECUTE ON FUNCTION public.get_public_bmi_stats() TO anon, authenticated;
+
+
+-- ============================================================
+-- 15. show_public_sis_comparison column ใน school_config
+-- ============================================================
+ALTER TABLE public.school_config
+  ADD COLUMN IF NOT EXISTS show_public_sis_comparison BOOLEAN DEFAULT false;
+
+
+-- ============================================================
+-- 16. get_public_sis_sessions — คืน sessions พร้อม stats_json
+--     สำหรับหน้าสาธารณะ (anon bypass RLS ผ่าน SECURITY DEFINER)
+-- ============================================================
+DROP FUNCTION IF EXISTS public.get_public_sis_sessions();
+CREATE OR REPLACE FUNCTION public.get_public_sis_sessions()
+RETURNS TABLE (
+  id            uuid,
+  academic_year varchar,
+  checkpoint    smallint,
+  checkpoint_label varchar,
+  stats_json    jsonb,
+  sort_order    integer
+)
+LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public
+AS $$
+  SELECT id, academic_year, checkpoint, checkpoint_label, stats_json, sort_order
+  FROM import_sessions
+  WHERE stats_json IS NOT NULL
+    AND stats_json::text != '{}'
+    AND (stats_json->>'total')::int > 0
+  ORDER BY academic_year ASC, checkpoint ASC;
+$$;
+GRANT EXECUTE ON FUNCTION public.get_public_sis_sessions() TO anon, authenticated;

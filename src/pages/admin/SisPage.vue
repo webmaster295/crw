@@ -101,18 +101,20 @@
                   :fill="hoveredChartBar?.s.id===bar.s.id ? 'url(#sisBarHov)' : 'url(#sisBarGrad)'"
                   :opacity="hoveredChartBar && hoveredChartBar.s.id!==bar.s.id ? 0.55 : 1"
                   class="transition-all duration-150"/>
-                <!-- Value on top of bar (if bar tall enough) -->
-                <text v-if="bar.h > 20" :x="bar.cx" :y="bar.y-5"
+                <!-- Value on top of bar — ซ่อนตอน hover เพราะ tooltip บัง -->
+                <text v-if="bar.h > 20 && hoveredChartBar?.s.id !== bar.s.id"
+                  :x="bar.cx" :y="bar.y-5"
                   text-anchor="middle" font-size="10" font-weight="700" fill="#3b82f6">
                   {{ bar.val >= 1000 ? `${(bar.val/1000).toFixed(1)}k` : bar.val }}
                 </text>
-                <!-- X label: year -->
+                <!-- X label line 1: ปีการศึกษา -->
                 <text :x="bar.cx" :y="C.H-C.PB+16" text-anchor="middle" font-size="10" fill="#475569" font-weight="600">
                   {{ bar.s.academic_year }}
                 </text>
-                <!-- X label: checkpoint -->
-                <text :x="bar.cx" :y="C.H-C.PB+28" text-anchor="middle" font-size="9" fill="#94a3b8">
-                  ช่วง {{ bar.s.checkpoint }}
+                <!-- X label line 2: ชื่อรอบที่ตั้งไว้ (แทน "ช่วง N") -->
+                <text v-if="bar.s.checkpoint_label" :x="bar.cx" :y="C.H-C.PB+28"
+                  text-anchor="middle" font-size="8.5" fill="#94a3b8">
+                  {{ bar.s.checkpoint_label.length > 14 ? bar.s.checkpoint_label.slice(0,13)+'…' : bar.s.checkpoint_label }}
                 </text>
               </g>
 
@@ -149,7 +151,32 @@
           </div>
         </div>
 
-        <!-- ตารางสรุปแต่ละรอบ (เรียงเก่า→ใหม่ = ซ้าย→ขวาเหมือนกราฟ) -->
+        <!-- Toggle: แสดงในหน้าสาธารณะ -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-5">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">🌐</span>
+              <div>
+                <div class="font-semibold text-gray-800 text-sm">แสดงกราฟเปรียบเทียบในหน้าสาธารณะ</div>
+                <div class="text-xs text-gray-400">เปิดเพื่อแสดงในส่วน "เปรียบเทียบสถิตินักเรียน" ที่ /students-info</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <button @click="showPublicSIS = !showPublicSIS"
+                :class="['relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none',
+                  showPublicSIS ? 'bg-blue-500' : 'bg-gray-200']">
+                <span :class="['inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
+                  showPublicSIS ? 'translate-x-6' : 'translate-x-1']"/>
+              </button>
+              <button @click="savePublicSISToggle" :disabled="savingPublicSIS"
+                class="px-4 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 transition">
+                {{ savingPublicSIS ? '...' : sisSaved ? '✓ บันทึกแล้ว' : 'บันทึก' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ตารางสรุปแต่ละรอบ — ล่าสุดอยู่บน (reverse ของกราฟ) -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <table class="w-full text-sm">
             <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
@@ -164,7 +191,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(s, i) in chartSessions" :key="'t'+s.id" class="border-b border-gray-50 hover:bg-gray-50/50">
+              <!-- tableSessions = newest first = reverse ของ chartSessions -->
+              <tr v-for="(s, i) in tableSessions" :key="'t'+s.id" class="border-b border-gray-50 hover:bg-gray-50/50">
                 <td class="py-2.5 px-4">
                   <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
                     ช่วง {{ s.checkpoint }}
@@ -176,12 +204,19 @@
                 <td class="py-2.5 px-4 text-center text-sky-600">{{ sj(s).male?.toLocaleString() ?? '-' }}</td>
                 <td class="py-2.5 px-4 text-center text-pink-500">{{ sj(s).female?.toLocaleString() ?? '-' }}</td>
                 <td class="py-2.5 px-4 text-center hidden sm:table-cell">
-                  <template v-if="i > 0 && sj(chartSessions[i-1]).total">
-                    <span :class="['text-xs font-medium px-2 py-0.5 rounded-full',
-                      sj(s).total > sj(chartSessions[i-1]).total ? 'bg-green-100 text-green-700' :
-                      sj(s).total < sj(chartSessions[i-1]).total ? 'bg-red-100 text-red-600' :
-                      'bg-gray-100 text-gray-500']">
-                      {{ sj(s).total > sj(chartSessions[i-1]).total ? '+' : '' }}{{ (sj(s).total||0) - (sj(chartSessions[i-1]).total||0) }}
+                  <!-- เปรียบกับ session ก่อนหน้าใน chartSessions (เรียงเก่า→ใหม่) -->
+                  <template v-if="chartSessions.findIndex(x=>x.id===s.id) > 0">
+                    <span :class="['text-xs font-medium px-2 py-0.5 rounded-full', (() => {
+                      const ci = chartSessions.findIndex(x=>x.id===s.id)
+                      const prev = sj(chartSessions[ci-1]).total||0
+                      const cur  = sj(s).total||0
+                      return cur>prev?'bg-green-100 text-green-700':cur<prev?'bg-red-100 text-red-600':'bg-gray-100 text-gray-500'
+                    })()]">
+                      {{ (() => {
+                        const ci = chartSessions.findIndex(x=>x.id===s.id)
+                        const diff = (sj(s).total||0)-(sj(chartSessions[ci-1]).total||0)
+                        return (diff>0?'+':'')+diff
+                      })() }}
                     </span>
                   </template>
                   <span v-else class="text-xs text-gray-300">–</span>
@@ -291,6 +326,24 @@
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '../../layouts/AdminLayout.vue'
 import { supabase } from '../../lib/supabase'
+import { useSchoolConfig } from '../../composables/useSchoolConfig'
+
+const { config, fetchConfig, updateConfig } = useSchoolConfig()
+
+// ── Toggle: แสดงกราฟในหน้าสาธารณะ ─────────────────────────────────────────
+const showPublicSIS  = ref(false)
+const savingPublicSIS = ref(false)
+const sisSaved        = ref(false)
+
+async function savePublicSISToggle() {
+  savingPublicSIS.value = true; sisSaved.value = false
+  try {
+    await updateConfig({ show_public_sis_comparison: showPublicSIS.value })
+    sisSaved.value = true
+    setTimeout(() => { sisSaved.value = false }, 2000)
+  } catch (e) { console.error(e) }
+  finally { savingPublicSIS.value = false }
+}
 
 const sessions  = ref([])
 const loading   = ref(true)
@@ -356,6 +409,9 @@ const trendPath = computed(() => {
   if (chartBars.value.length < 2) return ''
   return chartBars.value.map((b, i) => `${i===0?'M':'L'}${b.cx},${b.ty}`).join(' ')
 })
+
+// ตาราง: ล่าสุดอยู่บน (reverse ของกราฟ)
+const tableSessions = computed(() => [...chartSessions.value].reverse())
 
 const hoveredChartBar = ref(null)
 
@@ -438,6 +494,9 @@ async function moveSession(idx, dir) {
 
 // ══ Load ══════════════════════════════════════════════════════════════════════
 onMounted(async () => {
+  await fetchConfig()
+  showPublicSIS.value = config.value?.show_public_sis_comparison ?? false
+
   const { data } = await supabase
     .from('import_sessions')
     .select('id, academic_year, checkpoint, checkpoint_label, total_rows, stats_json, sort_order, imported_at')
